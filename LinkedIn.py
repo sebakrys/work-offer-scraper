@@ -11,6 +11,7 @@ import csv
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
+
 def createFileAndAddHeaders(filename):
     # headers to CSV
     with open(filename, mode='w', newline='', encoding='utf-8') as file:
@@ -18,9 +19,10 @@ def createFileAndAddHeaders(filename):
         headers = ['URL']
         writer.writerow(headers)
 
+
 def scrapeOffersList(url):
     # get number of total pages
-    response = fetch_with_retries(url,retries=5, delay=5)
+    response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
         print(f"Skipping URL {url} due to repeated failures.")
         return
@@ -28,44 +30,66 @@ def scrapeOffersList(url):
     soup = BeautifulSoup(response.text, 'html.parser')
     offerLinkList = soup.find_all('a', {'class': 'base-card__full-link'})
 
-    number_of_offers = soup.find("span", {"class", "results-context-header__job-count"})\
-        .text.strip()
-    print("Liczba ofert: "+number_of_offers)
-
-    for offerLink in offerLinkList:
-        print(offerLink["href"])
-    print(len(offerLinkList))
+    #for offerLink in offerLinkList:
+    #    print(offerLink["href"])
+    #print(len(offerLinkList))
     return offerLinkList
 
 
-def scrapeOffersWithPagination(base_url, max_pages=10):
+def scrapeNumberOfOffers(
+        url="https://www.linkedin.com/jobs/search?keywords=Developer&location=%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska&distance=25"):
+    # get number of total pages
+    response = fetch_with_retries(url, retries=5, delay=5)
+    if not response:
+        print(f"Skipping URL {url} due to repeated failures.")
+        return
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    number_of_offers = soup.find("span", {"class", "results-context-header__job-count"}) \
+        .text.strip()
+    print("Liczba ofert: " + number_of_offers)
+    return number_of_offers
+
+
+def scrapeOffersWithPagination(base_url, numberOfOffers, repeat=0):
     offers = set()  # Zestaw przechowujący unikalne oferty
-    offers_per_page = 25  # Liczba ofert na stronę (zwykle 25 na LinkedIn)
+    runTimes = 0
 
-    for page_num in range(max_pages):
-        position = page_num * offers_per_page
-        paginated_url = f"{base_url}&position={position}&pageNum={page_num}"
+    while (runTimes <= repeat):
+        runTimes += 1
+        start = 0
+        offers_in_request = 0  # Liczba ofert na stronę (zwykle 10-25 na LinkedIn)
 
-        print(f"Scraping page {page_num + 1}: {paginated_url}")
-        offer_links = scrapeOffersList(paginated_url)
+        while (
+                (start + offers_in_request) < numberOfOffers
+                or
+                len(offers) < numberOfOffers
+        ):
 
-        if not offer_links:
-            print("No more offers found or reached end of results.")
-            break
+            start = start + offers_in_request
+            paginated_url = f"{base_url}&start={start}"
 
-        for link in offer_links:
-            try:
-                clean_url = link["href"].split('?')[0]
-                if clean_url not in offers:
-                    offers.add(clean_url)
-                else:
-                    print(f"Duplicate offer found: {clean_url}")
-            except KeyError:
-                print("Skipping a link without 'href'")
+            print(f"Scraping page(start) {start}/{numberOfOffers}")
+            offer_links = scrapeOffersList(paginated_url)
+
+            if not offer_links:
+                print("No more offers found or reached end of results.")
+                break
+            offers_in_request = len(offer_links)
+            print(f"offers_in_request {offers_in_request}")
+            for link in offer_links:
+                try:
+                    clean_url = link["href"].split('?')[0]
+                    if clean_url not in offers:
+                        offers.add(clean_url)
+                    else:
+                        print(f"Duplicate offer found: {clean_url}")
+                except KeyError:
+                    print("Skipping a link without 'href'")
+            print(f"Total unique offers scraped: {len(offers)}")
 
     print(f"Total unique offers scraped: {len(offers)}")
     return offers
-
 
 
 def fetch_with_retries(url, retries=3, delay=2):
@@ -78,7 +102,7 @@ def fetch_with_retries(url, retries=3, delay=2):
     """
     for attempt in range(1, retries + 1):
         try:
-            if(attempt>1):
+            if (attempt > 1):
                 print(f"Fetching URL: {url} (Attempt {attempt}/{retries})")
             response = requests.get(url)
             response.raise_for_status()  # Wyjątek, jeśli status >= 400
@@ -91,7 +115,6 @@ def fetch_with_retries(url, retries=3, delay=2):
             else:
                 print("Maximum retries reached. Skipping.")
                 return None
-
 
 
 # Ładowanie zmiennych środowiskowych
@@ -115,8 +138,10 @@ users_table = Table(
     Column("desciption", String(100), nullable=False),
 )
 
-url = "https://www.linkedin.com/jobs/search?keywords=Developer&location=%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska&distance=25"
+urlForNumberOfOffers = "https://www.linkedin.com/jobs/search?keywords=Developer&location=%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska&distance=25"
+url = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=Developer&location=%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska"
+# scrapeOffersList(url)
 
-#scrapeOffersList(url)
-
-offers = scrapeOffersWithPagination(url, max_pages=5)
+numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
+if (numberOfOffers):
+    offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=3)

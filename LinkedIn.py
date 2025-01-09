@@ -40,15 +40,15 @@ def scrapeOfferDetails(url, date):
     offer_id = 0
     if match:
         offer_id = match.group(1)  # ID oferty to dopasowana grupa
-        print(f"ID oferty: {offer_id}")
+        #print(f"ID oferty: {offer_id}")
 
 
 
-    print("=======================")
-    print(offerLanguage)
-    print(url)
-    print(offerTitle)
-    print(offerOrganization)
+    #print("=======================")
+    #print(offerLanguage)
+    #print(url)
+    #print(offerTitle)
+    #print(offerOrganization)
     #print(offerDescription)
     offerJobLevel = soup.find("span", {"class", "description__job-criteria-text"}).text.strip()
 
@@ -66,11 +66,13 @@ def scrapeOfferDetails(url, date):
         if comment:
             # remove brackets from comment
             offerApplyUrl = comment.strip().strip('"')
-            print(f"Extracted URL: {offerApplyUrl}")
+            #print(f"Extracted URL: {offerApplyUrl}")
         else:
-            print("No comment found in the <code> element.")
+            #print("No comment found in the <code> element.")
+            pass
     else:
-        print("No <code> element found with id 'applyUrl'.")
+        #print("No <code> element found with id 'applyUrl'.")
+        pass
 
 
     # Tworzenie obiektu JobOffer
@@ -90,7 +92,7 @@ def scrapeOfferDetails(url, date):
         detected_technologies=detected_technologies
     )
     # Debugging: Wyświetlenie informacji o ofercie
-    print(f"Parsed JobOffer: {job_offer}")
+    #print(f"Parsed JobOffer: {job_offer}")
 
     return job_offer
 
@@ -178,7 +180,8 @@ def scrapeOffersWithPagination(base_url, numberOfOffers, repeat=0):
                     if offer_tuple not in offers:
                         offers.add(offer_tuple)
                     else:
-                        print(f"Duplicate offer found: {clean_url}")
+                        #print(f"Duplicate offer found: {clean_url}")
+                        pass
                 except KeyError:
                     print("Skipping a link without 'url'")
             print(f"Total unique offers scraped: {len(offers)}")
@@ -197,12 +200,22 @@ urlForNumberOfOffers = f"https://www.linkedin.com/jobs/search?keywords={searchKe
 url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={searchKeyword}&location={location}"
 # scrapeOffersList(url)
 
-numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
-if (numberOfOffers):
-    offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=0)
-    for index, offer in enumerate(offers):
-        job_offer = scrapeOfferDetails(offer[0], offer[1])
-        if(filterJobOffer(job_offer)):
-            job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
-            job_offer.skill_percentage = 1.0-(float(len(job_offer.skill_deficiencies))/float(len(job_offer.detected_technologies)))
-            save_job_offer_to_db(job_offer)
+
+def run_LinkedIn_scraper():
+    numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
+    if (numberOfOffers):
+        offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=0)
+        for index, offer in enumerate(offers):
+            job_offer = scrapeOfferDetails(offer[0], offer[1])
+            if (filterJobOffer(job_offer)):
+                print("======================")
+                job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
+                print(job_offer.url)
+                job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
+                    sum(len(value) for value in job_offer.detected_technologies.values())))
+                print(job_offer.skill_percentage)
+                print(
+                    f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
+                print(
+                    f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
+                save_job_offer_to_db(job_offer)

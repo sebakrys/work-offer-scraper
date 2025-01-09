@@ -63,8 +63,26 @@ def save_job_offer_to_db(job_offer):
         ).first()
 
         if existing_offer:
-            print(f"Oferta o ID {job_offer.web_id} już istnieje w bazie danych.")
-            return False
+            print(f"Oferta o ID {job_offer.web_id} już istnieje. Aktualizowanie...")
+            # Aktualizacja istniejącej oferty
+            existing_offer.url = job_offer.url
+            existing_offer.date = job_offer.date
+            existing_offer.title = job_offer.title
+            existing_offer.skill_deficiencies = job_offer.skill_deficiencies
+            existing_offer.skill_percentage = job_offer.skill_percentage
+            existing_offer.job_level = job_offer.job_level
+            existing_offer.organization = job_offer.organization
+            existing_offer.organization_url = job_offer.organization_url
+            existing_offer.location = job_offer.location
+            existing_offer.language = job_offer.language
+            existing_offer.apply_url = job_offer.apply_url
+            existing_offer.requirements = job_offer.requirements
+            existing_offer.detected_technologies = job_offer.detected_technologies
+            existing_offer.description = job_offer.description
+
+            session.commit()
+            print(f"Oferta o ID {job_offer.web_id} została zaktualizowana.")
+            return True
 
         # Tworzenie i zapisywanie nowej oferty
         new_offer = JobOfferDB(

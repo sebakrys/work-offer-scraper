@@ -21,7 +21,7 @@ nlp_keywords = ["doświadczenie", "znajomość", "wiedza", "umiejętność", "ko
 programming_languages = [
     "Python", "JavaScript", "Java", "C#", "Ruby", "PHP",
     "TypeScript", "C++", "R", "Go", "Swift", "Kotlin",
-    "Rust", "Scala", "WordPress"
+    "Rust", "Scala", "WordPress", "SQL"
 ]
 
 # Lista frameworków i bibliotek
@@ -36,7 +36,7 @@ frameworks = [
     "SLF4J", "Log4j", "Apache Kafka", "RabbitMQ", "JMS", "RESTEasy",
     "Jersey", "Retrofit", "Jackson", "Gson", "JAXB", "XStream",
     # C# frameworks
-    "ASP.NET", "Entity Framework", "Blazor", ".Net"
+    "ASP.NET", "Entity Framework", "Blazor", ".NET",
     # Ruby frameworks
     "Ruby on Rails",
     # PHP frameworks
@@ -89,48 +89,6 @@ other_technologies = [
     "GraphQL", "REST API", "SOAP", "WebSockets", "RabbitMQ", "Kafka"
 ]
 
-# Lista języków programowania, frameworków, narzędzi i technologii
-#technologies = {
-#    "Języki programowania": {
-#        "Python": ["Django", "Flask", "FastAPI", "Pandas", "NumPy", "SciPy", "TensorFlow", "PyTorch"],
-#        "JavaScript": ["React", "React.js", "Angular", "Vue.js", "Node.js", "Express"],
-#        "Java": [
-#            "Spring", "Spring Boot", "Struts", "Hibernate", "JPA", "MyBatis",
-#            "JUnit", "TestNG", "Mockito", "Spock",
-#            "Maven", "Gradle", "Jenkins", "SLF4J", "Log4j",
-#            "Apache Kafka", "RabbitMQ", "JMS", "RESTEasy", "Jersey", "Retrofit",
-#            "Jackson", "Gson", "JAXB", "XStream"
-#        ],
-#       "C#": ["ASP.NET", "Entity Framework", "Blazor"],
-#        "Ruby": ["Ruby on Rails"],
-#        "PHP": ["Laravel", "Symfony", "CodeIgniter"],
-#        "TypeScript": ["NestJS", "React","React.js", "Angular"],
-#        "C++": ["Qt", "Boost"],
-#        "R": ["Shiny", "ggplot2", "dplyr"],
-#        "Go": ["Gin", "Echo"],
-#        "Swift": ["SwiftUI", "Vapor"],
-#        "Kotlin": ["Ktor", "Spring Boot"],
-#        "Rust": ["Actix", "Rocket", "Tokio"],
-#        "Scala": ["Akka", "Play Framework", "Slick"],
-#        "WordPress": ["Elementor", "WooCommerce", "Gutenberg", "Gutenify"]
-#    },
-#    "DevOps i konteneryzacja": [
-#        "Docker", "Kubernetes", "Jenkins", "GitLab CI/CD", "Ansible", "Terraform", "Helm", "Prometheus", "Grafana"
-#    ],
-#    "Chmury obliczeniowe": [
-#        "AWS", "Azure", "GCP", "Heroku", "OpenStack", "DigitalOcean"
-#    ],
-#    "Bazy danych": [
-#        "PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch", "SQLite", "MariaDB", "Oracle DB", "Cassandra", "DynamoDB", "NoSQL"
-#    ],
-#    "Systemy kontroli wersji i CI/CD": [
-#        "Git", "SVN", "GitHub Actions", "Bitbucket Pipelines", "CircleCI", "TravisCI", "Github"
-#    ],
-#    "Inne technologie": [
-#        "GraphQL", "REST API", "SOAP", "WebSockets", "RabbitMQ", "Kafka"
-#    ]
-#}
-
 disqualifying_words = [
     "senior", "expert"
 ]
@@ -150,7 +108,8 @@ my_knowledge = [
     "RabbitMQ",  "Jackson",
     "Python", "FastAPI", "Pandas", "NumPy", "SciPy",
     "JavaScript", "React", "React.js",
-    "WordPress", "Elementor", "WooCommerce", "Gutenberg", "Gutenify"
+    "WordPress", "Elementor", "WooCommerce", "Gutenberg", "Gutenify",
+    "GCP", "REST API", "PostgreSQL", "SQL", "Git", "Github"
 ]
 
 
@@ -218,13 +177,15 @@ def analyzeOfferDetails(offerLanguage, offerDescription, offerTitle):
 
     # Wykrywanie technologii w różnych kategoriach
     def find_with_word_boundaries(items, text):
-        """Znajduje elementy w tekście za pomocą granic słów."""
+        """Finds items in the text using word boundaries and special handling for cases like C#, C++, .NET."""
         found = []
         for item in items:
-            if item in {"C++", "C#", ".NET"}:  # Specjalne traktowanie tych języków
+            if item == ".NET":  # Specific handling for .NET
+                pattern = r'(?<!\w)\.NET(?!\w|\d)'
+            elif item in {"C++", "C#"}:  # Specific handling for C++ and C#
                 pattern = rf'(?<!\w){re.escape(item)}(?!\w)'
-            else:
-                pattern = rf'\b{re.escape(item.lower())}\b'
+            else:  # General case for other technologies
+                pattern = rf'\b{re.escape(item)}\b'
             if re.search(pattern, text, re.IGNORECASE):
                 found.append(item)
         return found
@@ -294,11 +255,13 @@ def filterJobOffer(job_offer):
 
     # Jeśli znaleziono wymagane słowa, akceptujemy ofertę
     if found_required_words:
-        print(f"Oferta spełnia wymagania. Znalezione słowa kluczowe: {', '.join(found_required_words)}")
+        print(f"Oferta spełnia wymagania. Znalezione słowa kluczowe: ")#{' '.join(found_required_words)}
+        for w in found_required_words:
+            print(f"- {w}")
         return True
 
     # Jeśli nie znaleziono wymaganych słów, odrzuć ofertę
-    print("Oferta odrzucona: brak wymaganych słów kluczowych.")
+    #print("Oferta odrzucona: brak wymaganych słów kluczowych.")
     return False
 
 

@@ -1,4 +1,6 @@
 import re
+import string
+
 import spacy
 import importlib
 import subprocess
@@ -37,7 +39,8 @@ technologies = {
         "Swift": ["SwiftUI", "Vapor"],
         "Kotlin": ["Ktor", "Spring Boot"],
         "Rust": ["Actix", "Rocket", "Tokio"],
-        "Scala": ["Akka", "Play Framework", "Slick"]
+        "Scala": ["Akka", "Play Framework", "Slick"],
+        "WordPress": ["Elementor", "WooCommerce", "Gutenberg", "Gutenify"]
     },
     "DevOps i konteneryzacja": [
         "Docker", "Kubernetes", "Jenkins", "GitLab CI/CD", "Ansible", "Terraform", "Helm", "Prometheus", "Grafana"
@@ -46,10 +49,10 @@ technologies = {
         "AWS", "Azure", "GCP", "Heroku", "OpenStack", "DigitalOcean"
     ],
     "Bazy danych": [
-        "PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch", "SQLite", "MariaDB", "Oracle DB", "Cassandra", "DynamoDB"
+        "PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch", "SQLite", "MariaDB", "Oracle DB", "Cassandra", "DynamoDB", "NoSQL"
     ],
     "Systemy kontroli wersji i CI/CD": [
-        "Git", "SVN", "GitHub Actions", "Bitbucket Pipelines", "CircleCI", "TravisCI"
+        "Git", "SVN", "GitHub Actions", "Bitbucket Pipelines", "CircleCI", "TravisCI", "Github"
     ],
     "Inne technologie": [
         "GraphQL", "REST API", "SOAP", "WebSockets", "RabbitMQ", "Kafka"
@@ -110,18 +113,23 @@ def analyzeOfferDetails(offerLanguage, offerDescription, offerTitle):
 
         if isinstance(items, dict):  # Obsługa języków z frameworkami
             for language, frameworks in items.items():
-                # Sprawdzanie języka w tytule i opisie
+                # Specjalne traktowanie języków z symbolami (np. C++)
                 if re.search(rf'\b{re.escape(language)}\b', f"{offerDescription} {offerTitle}", re.IGNORECASE):
                     frameworks_found = [
                         framework for framework in frameworks
                         if re.search(rf'\b{re.escape(framework)}\b', f"{offerDescription} {offerTitle}", re.IGNORECASE)
                     ]
                     detected_technologies[category].append((language, frameworks_found))
-        else:  # Obsługa prostych list technologii
+        else:  # Prosta lista technologii
             detected_technologies[category] = [
-                item for item in items
-                if re.search(rf'\b{re.escape(item)}\b', f"{offerDescription} {offerTitle}", re.IGNORECASE)
+                item for item in items if re.search(rf'\b{re.escape(item)}\b', f"{offerDescription} {offerTitle}", re.IGNORECASE)
             ]
+
+    # Dodatkowe sprawdzanie dla C++ i podobnych języków
+    if "C++" in f"{offerDescription} {offerTitle}":
+        detected_technologies["Języki programowania"].append(("C++", technologies["Języki programowania"]["C++"]))
+    if "C#" in f"{offerDescription} {offerTitle}":
+        detected_technologies["Języki programowania"].append(("C#", technologies["Języki programowania"]["C#"]))
 
     # Zwracanie wyników
     return {

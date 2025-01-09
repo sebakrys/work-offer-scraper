@@ -14,7 +14,7 @@ from playwright.sync_api import sync_playwright
 import langid
 
 from JobOffer import JobOffer
-from OfferAnalyze import analyzeOfferDetails
+from OfferAnalyze import analyzeOfferDetails, filterJobOffer, detectSkillDeficiencies
 from database import save_job_offer_to_db
 from web import fetch_with_retries
 
@@ -202,4 +202,7 @@ if (numberOfOffers):
     offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=0)
     for index, offer in enumerate(offers):
         job_offer = scrapeOfferDetails(offer[0], offer[1])
-        save_job_offer_to_db(job_offer)
+        if(filterJobOffer(job_offer)):
+            job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
+            job_offer.skill_percentage = 1.0-(float(len(job_offer.skill_deficiencies))/float(len(job_offer.detected_technologies)))
+            save_job_offer_to_db(job_offer)

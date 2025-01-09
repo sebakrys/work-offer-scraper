@@ -1,7 +1,7 @@
 class JobOffer:
     def __init__(self, url, date, title, organization, organization_url, location,
-                 description, language, job_level, apply_url, web_id,
-                 requirements=None, detected_technologies=None):
+                 description, language, job_level, apply_url, web_id, skill_percentage = 0.0,
+                 requirements=None, detected_technologies=None, skill_deficiencies = None):
         self.url = url
         self.date = date
         self.title = title
@@ -15,9 +15,12 @@ class JobOffer:
         self.web_id = web_id
         self.requirements = requirements or []
         self.detected_technologies = detected_technologies or {}
+        self.skill_deficiencies = skill_deficiencies
+        self.skill_percentage = skill_percentage
 
     def __repr__(self):
         return (f"JobOffer(title={self.title}, organization={self.organization}, "
+                f"umiejetnosci={self.skill_percentage}"
                 f"url={self.url}, date={self.date}, location={self.location}, "
                 f"language={self.language}, web_id={self.web_id}, date={self.date}, requirements={self.requirements}, detected_technologies={self.detected_technologies})")
 

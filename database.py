@@ -1,6 +1,6 @@
 import os
 from datetime import date
-from sqlalchemy import create_engine, Column, Integer, String, Text, Date, JSON, ARRAY, BigInteger
+from sqlalchemy import create_engine, Column, Integer, String, Text, Date, JSON, ARRAY, BigInteger, Double
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
@@ -26,16 +26,18 @@ class JobOfferDB(Base):
     url = Column(Text, nullable=False)
     date = Column(Date)
     title = Column(Text)
+    skill_deficiencies = Column(ARRAY(Text))
+    skill_percentage = Column(Double)
     organization = Column(Text)
     organization_url = Column(Text)
     location = Column(Text)
-    description = Column(Text)
     language = Column(String(10))
     job_level = Column(Text)
     apply_url = Column(Text)
     web_id = Column(BigInteger)
     requirements = Column(ARRAY(Text))
     detected_technologies = Column(JSON)
+    description = Column(Text)
 
 
 # Inicjalizacja bazy danych
@@ -69,16 +71,18 @@ def save_job_offer_to_db(job_offer):
             url=job_offer.url,
             date=job_offer.date,
             title=job_offer.title,
+            skill_deficiencies=job_offer.skill_deficiencies,
+            skill_percentage=job_offer.skill_percentage,
+            job_level=job_offer.job_level,
             organization=job_offer.organization,
             organization_url=job_offer.organization_url,
             location=job_offer.location,
-            description=job_offer.description,
             language=job_offer.language,
-            job_level=job_offer.job_level,
             apply_url=job_offer.apply_url,
             web_id=job_offer.web_id,
             requirements=job_offer.requirements,
-            detected_technologies=job_offer.detected_technologies
+            detected_technologies=job_offer.detected_technologies,
+            description=job_offer.description
         )
         session.add(new_offer)
         session.commit()

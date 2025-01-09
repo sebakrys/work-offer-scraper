@@ -1,6 +1,7 @@
 # https://www.linkedin.com/jobs/search?keywords=Developer&location=%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska&distance=25
-
+import json
 import os
+import re
 import time
 
 from dotenv import load_dotenv
@@ -8,8 +9,12 @@ from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
 from databases import Database
 import requests
 import csv
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 from playwright.sync_api import sync_playwright
+import langid
+
+from JobOffer import JobOffer
+from OfferAnalyze import analyzeOfferDetails
 
 
 def createFileAndAddHeaders(filename):
@@ -20,25 +25,86 @@ def createFileAndAddHeaders(filename):
         writer.writerow(headers)
 
 
-def scrapeOffersList(url):
-    # get number of total pages
+def scrapeOfferDetails(url, date):
     response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
         print(f"Skipping URL {url} due to repeated failures.")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
-    offerLinkList = soup.find_all('a', {'class': 'base-card__full-link'})
+    offerTitle = soup.find("h1", {"class", "top-card-layout__title"}).text.strip()
+    offerOrganization = soup.find("a", {"class", "topcard__org-name-link"})
+    offerOrganizationURL = offerOrganization["href"].split('?')[0]
+    offerOrganization = offerOrganization.text.strip()
+    offerLocation = soup.find("span", {"class", "topcard__flavor topcard__flavor--bullet"}).text.strip()
+    offerDescription = soup.find("div", {"class", "show-more-less-html__markup"}).get_text(separator="\n").strip()
+    offerLanguage, languageConfidence = langid.classify(offerDescription)
 
-    #for offerLink in offerLinkList:
-    #    print(offerLink["href"])
-    #print(len(offerLinkList))
-    return offerLinkList
+
+    # get offer id from url "-127173516765732"
+    match = re.search(r'-(\d+)$', url)
+    offer_id = 0
+    if match:
+        offer_id = match.group(1)  # ID oferty to dopasowana grupa
+        print(f"ID oferty: {offer_id}")
+
+
+
+    print("=======================")
+    print(offerLanguage)
+    print(url)
+    print(offerTitle)
+    print(offerOrganization)
+    #print(offerDescription)
+    offerJobLevel = soup.find("span", {"class", "description__job-criteria-text"}).text.strip()
+
+
+
+    analyzed_details = analyzeOfferDetails(offerLanguage, offerDescription, offerTitle)
+    requirements = analyzed_details["requirements"]
+    detected_technologies = analyzed_details["detected_technologies"]
+
+    #get apply url hidden in comment
+    code_element_ApplyUrl = soup.find('code', {'id': 'applyUrl'})
+    offerApplyUrl = url
+    if code_element_ApplyUrl:
+        comment = code_element_ApplyUrl.find(string=lambda string: isinstance(string, Comment))
+        if comment:
+            # remove brackets from comment
+            offerApplyUrl = comment.strip().strip('"')
+            print(f"Extracted URL: {offerApplyUrl}")
+        else:
+            print("No comment found in the <code> element.")
+    else:
+        print("No <code> element found with id 'applyUrl'.")
+
+
+    # Tworzenie obiektu JobOffer
+    job_offer = JobOffer(
+        url=url,
+        date=date,
+        title=offerTitle,
+        organization=offerOrganization,
+        organization_url=offerOrganizationURL,
+        location=offerLocation,
+        description=offerDescription,
+        language=offerLanguage,
+        job_level=offerJobLevel,
+        apply_url=offerApplyUrl,
+        web_id=offer_id,
+        requirements=requirements,
+        detected_technologies=detected_technologies
+    )
+    # Debugging: Wyświetlenie informacji o ofercie
+    print(f"Parsed JobOffer: {job_offer}")
+
+    return job_offer
 
 
 def scrapeNumberOfOffers(
         url="https://www.linkedin.com/jobs/search?keywords=Developer&location=%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska&distance=25"):
     # get number of total pages
+    print("url scrapeNumberOfOffers " + url)
     response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
         print(f"Skipping URL {url} due to repeated failures.")
@@ -49,6 +115,38 @@ def scrapeNumberOfOffers(
         .text.strip()
     print("Liczba ofert: " + number_of_offers)
     return number_of_offers
+
+
+
+def scrapeOffersList(url):
+    # get number of total pages
+    response = fetch_with_retries(url, retries=5, delay=5)
+    if not response:
+        print(f"Skipping URL {url} due to repeated failures.")
+        return
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    # Znajdź wszystkie elementy ofert pracy
+    offer_cards = soup.find_all('div', {'class': 'base-card'})
+
+    offers = []
+
+    for card in offer_cards:
+        # Wyciągnięcie URL oferty
+        link_element = card.find('a', {'class': 'base-card__full-link'})
+        offer_url = link_element['href'] if link_element else None
+
+        # Wyciągnięcie daty publikacji
+        time_element = card.find('time', {'class': 'job-search-card__listdate'})
+        offer_date = time_element['datetime'] if time_element else None
+
+        if offer_url:
+            offers.append({
+                'url': offer_url,
+                'date': offer_date
+            })
+
+    return offers
 
 
 def scrapeOffersWithPagination(base_url, numberOfOffers, repeat=0):
@@ -70,22 +168,25 @@ def scrapeOffersWithPagination(base_url, numberOfOffers, repeat=0):
             paginated_url = f"{base_url}&start={start}"
 
             print(f"Scraping page(start) {start}/{numberOfOffers}")
-            offer_links = scrapeOffersList(paginated_url)
+            offer_list = scrapeOffersList(paginated_url)
 
-            if not offer_links:
+            if not offer_list:
                 print("No more offers found or reached end of results.")
                 break
-            offers_in_request = len(offer_links)
+            offers_in_request = len(offer_list)
             print(f"offers_in_request {offers_in_request}")
-            for link in offer_links:
+            for link in offer_list:
                 try:
-                    clean_url = link["href"].split('?')[0]
-                    if clean_url not in offers:
-                        offers.add(clean_url)
+                    clean_url = link["url"].split('?')[0]
+                    date = link.get('date', None)  # Pobranie daty, jeśli istnieje
+                    offer_tuple = (clean_url, date)  # Tworzenie krotki
+
+                    if offer_tuple not in offers:
+                        offers.add(offer_tuple)
                     else:
                         print(f"Duplicate offer found: {clean_url}")
                 except KeyError:
-                    print("Skipping a link without 'href'")
+                    print("Skipping a link without 'url'")
             print(f"Total unique offers scraped: {len(offers)}")
 
     print(f"Total unique offers scraped: {len(offers)}")
@@ -138,10 +239,21 @@ users_table = Table(
     Column("desciption", String(100), nullable=False),
 )
 
-urlForNumberOfOffers = "https://www.linkedin.com/jobs/search?keywords=Developer&location=%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska&distance=25"
-url = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=Developer&location=%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska"
+
+
+
+
+
+searchKeyword = "Developer"
+location = "%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska"
+distance = 25
+
+urlForNumberOfOffers = f"https://www.linkedin.com/jobs/search?keywords={searchKeyword}&location={location}&distance={distance}"
+url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={searchKeyword}&location={location}"
 # scrapeOffersList(url)
 
 numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
 if (numberOfOffers):
-    offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=3)
+    offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=0)
+    for index, offer in enumerate(offers):
+        scrapeOfferDetails(offer[0], offer[1])

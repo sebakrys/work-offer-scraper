@@ -51,6 +51,7 @@ def scrapeOfferDetails(url, date):
     #print(offerOrganization)
     #print(offerDescription)
     offerJobLevel = soup.find("span", {"class", "description__job-criteria-text"}).text.strip()
+    #TODO add forma zatrudnienia (pełen etat / B2B)
 
 
 
@@ -194,7 +195,7 @@ def scrapeOffersWithPagination(base_url, numberOfOffers, repeat=0):
 
 searchKeyword = "Developer"
 location = "%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska"
-distance = 25
+distance = 25 # in miles
 
 urlForNumberOfOffers = f"https://www.linkedin.com/jobs/search?keywords={searchKeyword}&location={location}&distance={distance}"
 url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={searchKeyword}&location={location}"
@@ -218,4 +219,4 @@ def run_LinkedIn_scraper():
                     f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
                 print(
                     f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
-                save_job_offer_to_db(job_offer)
+                save_job_offer_to_db(job_offer, "LinkedIn")

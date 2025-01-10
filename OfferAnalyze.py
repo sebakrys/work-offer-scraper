@@ -133,14 +133,21 @@ def ensure_spacy_model(model_name):
 def get_nlp_model_for_text(language):
     model_name = LANGUAGE_MODEL_MAP.get(language)
 
-    if model_name:
-        ensure_spacy_model(model_name)
-        return spacy.load(model_name)
-    else:
-        raise ValueError(f"Brak modelu spaCy dla wykrytego języka: {language}")
+    try:
+        if model_name:
+            ensure_spacy_model(model_name)
+            return spacy.load(model_name)
+        else:
+            print(f"Brak modelu spaCy dla wykrytego języka: {language}. Użycie modelu domyślnego 'en_core_web_sm'.")
+            ensure_spacy_model("en_core_web_sm")
+            return spacy.load("en_core_web_sm")
+    except Exception as e:
+        print(f"Błąd podczas ładowania modelu spaCy dla języka {language}: {e}")
+        # Możesz zwrócić `None` lub inny fallback tutaj, jeśli chcesz.
+        return None
 
 
-def analyzeOfferDetails(offerLanguage, offerDescription, offerTitle):
+def analyzeOfferDetails(offerLanguage, offerDescription, offerTitle, obtainedTechnologiesList=[]):
     """
     Analyzes the details of a job offer in terms of requirements and technologies, including the job title.
     Analizuje szczegóły oferty pracy pod kątem wymagań i technologii, uwzględniając tytuł oferty.
@@ -172,8 +179,8 @@ def analyzeOfferDetails(offerLanguage, offerDescription, offerTitle):
         "Other Technologies": []
     }
 
-    # Łączenie opisu i tytułu w jeden tekst do analizy
-    combined_text = f"{offerDescription} {offerTitle}".lower()
+    # Łączenie opisu, tytułu i listy technologii w jeden tekst do analizy
+    combined_text = f"{offerDescription} {offerTitle} {' '.join(obtainedTechnologiesList)}".lower()
 
     # Wykrywanie technologii w różnych kategoriach
     def find_with_word_boundaries(items, text):

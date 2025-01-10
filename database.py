@@ -1,6 +1,7 @@
 import os
 from datetime import date
-from sqlalchemy import create_engine, Column, Integer, String, Text, Date, JSON, ARRAY, BigInteger, Double
+from sqlalchemy import create_engine, Column, Integer, String, Text, Date, JSON, ARRAY, BigInteger, Double, func, \
+    DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
@@ -38,6 +39,10 @@ class JobOfferDB(Base):
     requirements = Column(ARRAY(Text))
     detected_technologies = Column(JSON)
     description = Column(Text)
+    source = Column(Text)
+    first_scrape_date = Column(DateTime, default=func.now())  # Data pierwszego zrzutu
+    scrape_date = Column(DateTime, default=func.now(), onupdate=func.now())  # Data ostatniej aktualizacji
+
 
 
 # Inicjalizacja bazy danych
@@ -48,7 +53,7 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
-def save_job_offer_to_db(job_offer):
+def save_job_offer_to_db(job_offer, source):
     """
     Zapisuje ofertę pracy do bazy danych.
 
@@ -79,6 +84,7 @@ def save_job_offer_to_db(job_offer):
             existing_offer.requirements = job_offer.requirements
             existing_offer.detected_technologies = job_offer.detected_technologies
             existing_offer.description = job_offer.description
+            existing_offer.source = source
 
             session.commit()
             print(f"Oferta o ID {job_offer.web_id} została zaktualizowana.")
@@ -100,7 +106,8 @@ def save_job_offer_to_db(job_offer):
             web_id=job_offer.web_id,
             requirements=job_offer.requirements,
             detected_technologies=job_offer.detected_technologies,
-            description=job_offer.description
+            description=job_offer.description,
+            source=source
         )
         session.add(new_offer)
         session.commit()

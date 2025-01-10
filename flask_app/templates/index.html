@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Offers</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+    <h1>Job Offers</h1>
+    <table id="jobTable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Organization</th>
+                <th>% skill</th>
+                <th>Experience Years</th>
+                <th>Level</th>
+                <th>Location</th>
+                <th>Date</th>
+                <th>Applied</th>
+                <th>Apply URL</th>
+            </tr>
+        </thead>
+    </table>
+<script>
+    $(document).ready(function() {
+        $('#jobTable').DataTable({
+            ajax: {
+                url: '/api/data',
+                dataSrc: ""
+            },
+            columns: [
+                { data: 'id' },
+                { data: 'title' },
+                { data: 'organization' },
+                { data: 'skill_percentage' },
+                { data: 'experience_years' },//TODO wyciagnąć jedną wartość lat wymaganych(średnia/min/max)
+                { data: 'job_level' },//TODO wyciagnąć jedną wartość(najniższą)
+                { data: 'location' },
+                { data: 'date', render: function(data) {
+                    return data ? data : 'N/A';
+                }},
+                {
+                    data: 'applied',
+                    render: function(data, type, row) {
+                        const checked = data ? 'checked' : '';
+                        return `<input type="checkbox" class="applied-toggle" data-id="${row.id}" ${checked}>`;
+                    }
+                },
+                { data: 'apply_url', render: function(data) {
+                    return `<a href="${data}" target="_blank">Apply</a>`;
+                }},
+            ],
+            order: [[0, 'asc']]
+        });
+
+        // Obsługa zmiany toggleboxa
+        $('#jobTable').on('change', '.applied-toggle', function() {
+            const isChecked = $(this).is(':checked');
+            const jobId = $(this).data('id');
+
+            // Wysyłanie żądania POST do backendu
+            $.ajax({
+                url: '/api/update_applied',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ id: jobId, applied: isChecked }),
+                success: function(response) {
+                    alert(response.message || 'Status updated successfully!');
+                },
+                error: function() {
+                    alert('An error occurred while updating the applied status.');
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

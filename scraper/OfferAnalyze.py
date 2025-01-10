@@ -128,7 +128,7 @@ required_words = [
 ]
 
 my_knowledge = [
-    "Java", "Python", "JavaScript", "HTML", "CSS", "WordPress", "SQL", "Bash"
+    "Java", "Python", "JavaScript", "HTML", "CSS", "WordPress", "SQL", "Bash",
 
     "Spring", "Spring Boot", "Hibernate", "JPA", "Maven",
     "RabbitMQ",  "Jackson",
@@ -508,6 +508,8 @@ def filterJobOffer(job_offer):
     return False
 
 
+
+
 def detectSkillDeficiencies(job_offer):
     """
     Identifies technologies mentioned in the job offer that are not present in the provided list of known technologies.
@@ -523,20 +525,7 @@ def detectSkillDeficiencies(job_offer):
     for category, items in job_offer.detected_technologies.items():
         if isinstance(items, list):  # Prosta lista technologii
             for item in items:
-                if isinstance(item, str) and item.lower() not in known_technologies:
-                    missing_technologies.add(item)
-        elif isinstance(items, dict):  # Języki programowania z frameworkami
-            for language, frameworks in items.items():
-                # Sprawdzanie języka programowania
-                if language.lower() not in known_technologies:
-                    missing_technologies.add(language)
-                # Sprawdzanie frameworków
-                for framework in frameworks:
-                    if framework.lower() not in known_technologies:
-                        missing_technologies.add(framework)
-        elif isinstance(items, tuple):  # Obsługa krotek (jeśli wystąpią)
-            for item in items:
-                if isinstance(item, str) and item.lower() not in known_technologies:
+                if isinstance(item, str) and not (item.lower() in known_technologies):
                     missing_technologies.add(item)
 
     # Zamiana na listę i sortowanie dla czytelności

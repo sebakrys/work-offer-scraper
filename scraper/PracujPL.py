@@ -117,10 +117,10 @@ def scrapeOfferDetails(url, date, company_url):
 
 
     detected_technologies_direct_from_site_expected = [span.get_text(strip=True) for span in soup.find_all('span', {'data-test': 'item-technologies-expected'})]
-    print(detected_technologies_direct_from_site_expected)#TODO mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
+    print(detected_technologies_direct_from_site_expected)# mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
     #all_tech.append(detected_technologies_direct_from_site_expected)
     detected_technologies_direct_from_site_optional = [span.get_text(strip=True) for span in soup.find_all('span', {'data-test': 'item-technologies-optional'})]
-    #print(detected_technologies_direct_from_site_optional)#TODO mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
+    #print(detected_technologies_direct_from_site_optional)# mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
     #all_tech.append(detected_technologies_direct_from_site_optional)
 
     analyzed_details = analyzeOfferDetails(offerLanguage, offerDescription, offerTitle, detected_technologies_direct_from_site_expected)

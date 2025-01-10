@@ -20,6 +20,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 # Definicja modelu JobOffer
+#TODO dodać kolumnę gdzie będzie zmodyfikowane umiejętności do CV za pomoca OpenAI API
 class JobOfferDB(Base):
     __tablename__ = "job_offers"
 

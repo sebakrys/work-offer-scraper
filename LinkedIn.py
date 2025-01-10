@@ -219,7 +219,7 @@ url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?k
 # scrapeOffersList(url)
 
 
-def run_LinkedIn_scraper(disable_OpenAI=True, updateExperienceYears=True):
+def run_LinkedIn_scraper(disable_OpenAI=True, updateExperienceYears=True, updateInCaseOfExistingInDB=True):
     numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=0)
@@ -228,7 +228,9 @@ def run_LinkedIn_scraper(disable_OpenAI=True, updateExperienceYears=True):
             if (filterJobOffer(job_offer)):
                 print("======================")
                 job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
-                if(updateExperienceYears): job_offer.experience_years = detectExperienceYears(job_offer, disable_OpenAI=disable_OpenAI)
+                if(updateExperienceYears):
+                    job_offer.experience_years = detectExperienceYears(job_offer, disable_OpenAI=disable_OpenAI)
+                print(job_offer.experience_years)
                 print(job_offer.url)
                 job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
                     sum(len(value) for value in job_offer.detected_technologies.values())))
@@ -237,4 +239,4 @@ def run_LinkedIn_scraper(disable_OpenAI=True, updateExperienceYears=True):
                     f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
                 print(
                     f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
-                save_job_offer_to_db(job_offer, "LinkedIn")
+                save_job_offer_to_db(job_offer, "LinkedIn", updateExperienceYears=updateExperienceYears, updateInCaseOfExistingInDB=updateInCaseOfExistingInDB)

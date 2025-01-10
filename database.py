@@ -58,7 +58,7 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
-def save_job_offer_to_db(job_offer, source):
+def save_job_offer_to_db(job_offer, source, updateExperienceYears=True, updateInCaseOfExistingInDB=True):
     """
     Zapisuje ofertę pracy do bazy danych.
 
@@ -73,27 +73,30 @@ def save_job_offer_to_db(job_offer, source):
         ).first()
 
         if existing_offer:
-            print(f"Oferta o ID {job_offer.web_id} już istnieje. Aktualizowanie...")
-            # Aktualizacja istniejącej oferty
-            existing_offer.url = job_offer.url
-            existing_offer.date = job_offer.date
-            existing_offer.title = job_offer.title
-            existing_offer.skill_deficiencies = job_offer.skill_deficiencies
-            existing_offer.skill_percentage = job_offer.skill_percentage
-            existing_offer.experience_years  = job_offer.experience_years
-            existing_offer.job_level = job_offer.job_level
-            existing_offer.organization = job_offer.organization
-            existing_offer.organization_url = job_offer.organization_url
-            existing_offer.location = job_offer.location
-            existing_offer.language = job_offer.language
-            existing_offer.apply_url = job_offer.apply_url
-            existing_offer.requirements = job_offer.requirements
-            existing_offer.detected_technologies = job_offer.detected_technologies
-            existing_offer.description = job_offer.description
-            existing_offer.source = source
+            print(f"Oferta o ID {job_offer.web_id} już istnieje.")
+            if(updateInCaseOfExistingInDB):
+                print("Aktualizowanie...")
+                # Aktualizacja istniejącej oferty
+                existing_offer.url = job_offer.url
+                existing_offer.date = job_offer.date
+                existing_offer.title = job_offer.title
+                existing_offer.skill_deficiencies = job_offer.skill_deficiencies
+                existing_offer.skill_percentage = job_offer.skill_percentage
+                if (updateExperienceYears):
+                    existing_offer.experience_years = job_offer.experience_years
+                existing_offer.job_level = job_offer.job_level
+                existing_offer.organization = job_offer.organization
+                existing_offer.organization_url = job_offer.organization_url
+                existing_offer.location = job_offer.location
+                existing_offer.language = job_offer.language
+                existing_offer.apply_url = job_offer.apply_url
+                existing_offer.requirements = job_offer.requirements
+                existing_offer.detected_technologies = job_offer.detected_technologies
+                existing_offer.description = job_offer.description
+                existing_offer.source = source
 
-            session.commit()
-            print(f"Oferta o ID {job_offer.web_id} została zaktualizowana.")
+                session.commit()
+                print(f"Oferta o ID {job_offer.web_id} została zaktualizowana.")
             return True
 
         # Tworzenie i zapisywanie nowej oferty
@@ -103,7 +106,7 @@ def save_job_offer_to_db(job_offer, source):
             title=job_offer.title,
             skill_deficiencies=job_offer.skill_deficiencies,
             skill_percentage=job_offer.skill_percentage,
-            experience_years = job_offer.experience_years,
+            experience_years=job_offer.experience_years,
             job_level=job_offer.job_level,
             organization=job_offer.organization,
             organization_url=job_offer.organization_url,

@@ -191,6 +191,7 @@ def detectExperienceYears(job_offer, disable_OpenAI=True):
         extract_experience_years_with_context_nlp(description=offerDescription, language_code=offerLanguage)
         offerExperienceYears = extract_experience_years_with_openai(description=offerDescription,
                                                                     language_code=offerLanguage)
+    return offerExperienceYears
 
 def extract_experience_years_with_openai(description, language_code):
     """

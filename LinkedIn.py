@@ -19,6 +19,14 @@ from database import save_job_offer_to_db
 from web import fetch_with_retries
 
 
+linkedin_joblvl_dictionary = {
+    "Początkujący" : "Junior",
+
+    "Kadra średniego szczebla" : "Mid",
+
+    "Specjalista" : "Senior",
+}
+
 def scrapeOfferDetails(url, date):
     response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
@@ -50,8 +58,15 @@ def scrapeOfferDetails(url, date):
     #print(offerTitle)
     #print(offerOrganization)
     #print(offerDescription)
-    offerJobLevel = soup.find("span", {"class", "description__job-criteria-text"}).text.strip()
-    #TODO add forma zatrudnienia (pełen etat / B2B)
+    offerJobLevel = [
+        linkedin_joblvl_dictionary.get(
+            soup.find("span", {"class", "description__job-criteria-text"}).text.strip(),
+            soup.find("span", {"class", "description__job-criteria-text"}).text.strip())
+    ]
+
+    #TODO add employmentType (rodzaj zatrudnienia, np. Umowa o pracę, B2B) [Dotyczy wszytskich stron]
+    # TODO add workSchedules (Etat, pełny, niepełny) [Dotyczy wszytskich stron]
+    # TODO add workModes (Hybrydowo, zdalnie, stacjonarnie) [Dotyczy wszytskich stron]
 
 
 

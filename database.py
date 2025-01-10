@@ -1,7 +1,7 @@
 import os
 from datetime import date
 from sqlalchemy import create_engine, Column, Integer, String, Text, Date, JSON, ARRAY, BigInteger, Double, func, \
-    DateTime
+    DateTime, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
@@ -24,6 +24,7 @@ class JobOfferDB(Base):
     __tablename__ = "job_offers"
 
     id = Column(Integer, primary_key=True, index=True)
+    applied = Column(Boolean, default=False) #new
     url = Column(Text, nullable=False)
     date = Column(Date)
     title = Column(Text)
@@ -33,7 +34,10 @@ class JobOfferDB(Base):
     organization_url = Column(Text)
     location = Column(Text)
     language = Column(String(10))
-    job_level = Column(Text)
+    job_level = Column(ARRAY(Text))
+    employmentType = Column(ARRAY(Text), default=[]) #new (rodzaj zatrudnienia, np. Umowa o pracę, B2B)
+    workSchedules = Column(ARRAY(Text), default=[]) #new (Etat, pełny, niepełny)
+    workModes = Column(ARRAY(Text), default=[]) #new (Hybrydowo, zdalnie, stacjonarnie)
     apply_url = Column(Text)
     web_id = Column(BigInteger)
     requirements = Column(ARRAY(Text))

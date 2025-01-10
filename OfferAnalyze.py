@@ -237,10 +237,16 @@ def filterJobOffer(job_offer):
 
     print(job_offer.job_level)
     # Sprawdzenie obecności słów dyskwalifikujących
+
     for word in disqualifying_words:
+        # w tytule
         if word.lower() in text_to_search_4_disqualifying_words:
             print(f"Oferta odrzucona z powodu słowa dyskwalifikującego: {word}")
             return False
+        # w job_lvl
+        for lvl in job_offer.job_level:
+            if (lvl.lower() in word.lower()):
+                return False
 
 
 

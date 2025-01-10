@@ -18,6 +18,20 @@ from OfferAnalyze import analyzeOfferDetails, filterJobOffer, detectSkillDeficie
 from database import save_job_offer_to_db
 from web import fetch_with_retries
 
+pracujpl_joblvl_dictionary = {
+    "trainee" : "trainee",
+    "praktykant / stażysta" : "trainee",
+
+    "junior specialist (Junior)" : "Junior",
+    "młodszy specjalista (Junior)" : "Junior",
+
+    "specjalista (Mid / Regular)" : "Mid",
+    "specialist (Mid / Regular)" : "Mid",
+
+    "starszy specjalista (Senior)" : "Senior",
+    "senior specialist (Senior)" : "Senior"
+}
+
 
 def scrapeOfferDetails(url, date, company_url):
     response = fetch_with_retries(url, retries=5, delay=5)
@@ -27,7 +41,7 @@ def scrapeOfferDetails(url, date, company_url):
 
     soup = BeautifulSoup(response.text, 'html.parser')
     offerTitle = soup.find('h1', {'data-scroll-id': 'job-title'}).text.strip()
-    offerOrganization = soup.find("h2", {"data-scroll-id": "employer-name"}).text.strip()
+    offerOrganization = soup.find("h2", {"data-scroll-id": "employer-name"}).contents[0].strip()
     offerOrganizationURL = company_url
 
     script_element = soup.find('script', {'id': '__NEXT_DATA__'})
@@ -37,12 +51,13 @@ def scrapeOfferDetails(url, date, company_url):
     requirements = soup.find("section", {"data-test": "section-requirements"})
     if(requirements):
         requirements_part_of_description = requirements.get_text(separator="\n").strip()
-        requirements.get_text(separator="\n").splitlines()#TODO cos nie do konca smiga, jest przypadek ze html przechodzi
+        requirements = requirements.get_text(separator="\n").splitlines()
     else:
         requirements_part_of_description=""
         requirements=[]
 
-    print(requirements)
+    #print("requirements")
+    #print(requirements)
 
 
 
@@ -55,7 +70,7 @@ def scrapeOfferDetails(url, date, company_url):
 
     offerDescription = f'{about_project} {requirements_part_of_description}'
 
-    print(offerDescription)
+    #print(offerDescription)
     offerLanguage, languageConfidence = langid.classify(offerDescription)
 
 
@@ -77,9 +92,11 @@ def scrapeOfferDetails(url, date, company_url):
 
     levels = []
     for lvl in json.loads(script_element.string.strip())["props"]["pageProps"]["dehydratedState"]["queries"][0]["state"]["data"]["attributes"]["employment"]["positionLevels"]:
-        levels.append(lvl["name"])
-    offerJobLevel = ", ".join(levels)#TODO brac pod uwage przy slowach eliminujacych jak expert /senior
-    print(offerJobLevel)
+        original_level = lvl["name"]
+        mapped_level = pracujpl_joblvl_dictionary.get(original_level, original_level)
+        levels.append(mapped_level)
+    #offerJobLevel = ", ".join(levels)
+    print(levels)
 
     #print(json.loads(script_element.string.strip())["props"]["pageProps"]["dehydratedState"]["queries"][0]["state"]["data"]["attributes"]["employment"]["positionLevels"])
     #print(find_path_to_key(json.loads(script_element.string.strip()), "positionLevels"))
@@ -89,9 +106,9 @@ def scrapeOfferDetails(url, date, company_url):
 
 
     detected_technologies_direct_from_site_expected = [span.get_text(strip=True) for span in soup.find_all('span', {'data-test': 'item-technologies-expected'})]
-    print(detected_technologies_direct_from_site_expected)#TODO mozna wykorzytsac do zrobienia kompleksowej listy technologi
+    print(detected_technologies_direct_from_site_expected)#TODO mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
     detected_technologies_direct_from_site_optional = [span.get_text(strip=True) for span in soup.find_all('span', {'data-test': 'item-technologies-optional'})]
-    #print(detected_technologies_direct_from_site_optional)#TODO mozna wykorzytsac do zrobienia kompleksowej listy technologi
+    #print(detected_technologies_direct_from_site_optional)#TODO mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
 
     analyzed_details = analyzeOfferDetails(offerLanguage, offerDescription, offerTitle, detected_technologies_direct_from_site_expected)
     detected_technologies = analyzed_details["detected_technologies"]
@@ -112,7 +129,7 @@ def scrapeOfferDetails(url, date, company_url):
         location=offerLocation,
         description=offerDescription,
         language=offerLanguage,
-        job_level=offerJobLevel,
+        job_level=levels,
         apply_url=offerApplyUrl,
         web_id=offer_id,
         requirements=requirements,

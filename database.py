@@ -30,6 +30,7 @@ class JobOfferDB(Base):
     title = Column(Text)
     skill_deficiencies = Column(ARRAY(Text))
     skill_percentage = Column(Double)
+    experience_years = Column(ARRAY(Double), default=[])
     organization = Column(Text)
     organization_url = Column(Text)
     location = Column(Text)
@@ -79,6 +80,7 @@ def save_job_offer_to_db(job_offer, source):
             existing_offer.title = job_offer.title
             existing_offer.skill_deficiencies = job_offer.skill_deficiencies
             existing_offer.skill_percentage = job_offer.skill_percentage
+            existing_offer.experience_years  = job_offer.experience_years
             existing_offer.job_level = job_offer.job_level
             existing_offer.organization = job_offer.organization
             existing_offer.organization_url = job_offer.organization_url
@@ -101,6 +103,7 @@ def save_job_offer_to_db(job_offer, source):
             title=job_offer.title,
             skill_deficiencies=job_offer.skill_deficiencies,
             skill_percentage=job_offer.skill_percentage,
+            experience_years = job_offer.experience_years,
             job_level=job_offer.job_level,
             organization=job_offer.organization,
             organization_url=job_offer.organization_url,

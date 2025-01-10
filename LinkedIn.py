@@ -14,7 +14,8 @@ from playwright.sync_api import sync_playwright
 import langid
 
 from JobOffer import JobOffer
-from OfferAnalyze import analyzeOfferDetails, filterJobOffer, detectSkillDeficiencies
+from OfferAnalyze import analyzeOfferDetails, filterJobOffer, detectSkillDeficiencies, \
+    extract_experience_years_with_context_nlp, extract_experience_years_with_openai, detectExperienceYears
 from database import save_job_offer_to_db
 from web import fetch_with_retries
 
@@ -41,6 +42,7 @@ def scrapeOfferDetails(url, date):
     offerLocation = soup.find("span", {"class", "topcard__flavor topcard__flavor--bullet"}).text.strip()
     offerDescription = soup.find("div", {"class", "show-more-less-html__markup"}).get_text(separator="\n").strip()
     offerLanguage, languageConfidence = langid.classify(offerDescription)
+
 
 
     # get offer id from url "-127173516765732"
@@ -105,7 +107,7 @@ def scrapeOfferDetails(url, date):
         apply_url=offerApplyUrl,
         web_id=offer_id,
         requirements=requirements,
-        detected_technologies=detected_technologies
+        detected_technologies=detected_technologies,
     )
     # Debugging: Wyświetlenie informacji o ofercie
     #print(f"Parsed JobOffer: {job_offer}")
@@ -217,7 +219,7 @@ url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?k
 # scrapeOffersList(url)
 
 
-def run_LinkedIn_scraper():
+def run_LinkedIn_scraper(disable_OpenAI=True, updateExperienceYears=True):
     numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=0)
@@ -226,6 +228,7 @@ def run_LinkedIn_scraper():
             if (filterJobOffer(job_offer)):
                 print("======================")
                 job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
+                if(updateExperienceYears): job_offer.experience_years = detectExperienceYears(job_offer, disable_OpenAI=disable_OpenAI)
                 print(job_offer.url)
                 job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
                     sum(len(value) for value in job_offer.detected_technologies.values())))

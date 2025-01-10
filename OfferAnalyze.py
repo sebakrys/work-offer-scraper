@@ -1,6 +1,8 @@
+import os
 import re
 import string
 
+import openai
 import spacy
 import importlib
 import subprocess
@@ -8,6 +10,8 @@ import subprocess
 
 
 # Mapowanie języków na modele spaCy
+from openai import OpenAI
+
 LANGUAGE_MODEL_MAP = {
     "pl": "pl_core_news_sm",
     "en": "en_core_web_sm"
@@ -17,11 +21,14 @@ LANGUAGE_MODEL_MAP = {
 nlp_keywords = ["doświadczenie", "znajomość", "wiedza", "umiejętność", "kompetencje",
                 "experience", "skills", "Requirements", "Profile"]
 
+
+
 # Lista języków programowania
 programming_languages = [
     "Python", "JavaScript", "Java", "C#", "Ruby", "PHP",
     "TypeScript", "C++", "R", "Go", "Swift", "Kotlin",
-    "Rust", "Scala", "WordPress", "SQL"
+    "Rust", "Scala", "WordPress", "SQL",
+    "HTML", "CSS", "Bash", "Perl", "Haskell"
 ]
 
 # Lista frameworków i bibliotek
@@ -58,36 +65,54 @@ frameworks = [
     # Scala frameworks
     "Akka", "Play Framework", "Slick",
     # WordPress frameworks
-    "Elementor", "WooCommerce", "Gutenberg", "Gutenify"
+    "Elementor", "WooCommerce", "Gutenberg", "Gutenify",
+    # New additions
+    "Cypress", "Jest", "Bootstrap", "Tailwind", "Next.js",
+    "Nest.js", "RxJS", "NgRx", "Prisma", "OpenAPI", "Redux",
+    "Foundation", "Blazor"
 ]
 
 # Lista narzędzi DevOps i konteneryzacji
 devops_tools = [
     "Docker", "Kubernetes", "Jenkins", "GitLab CI/CD", "Ansible", "Terraform",
-    "Helm", "Prometheus", "Grafana"
+    "Helm", "Prometheus", "Grafana",
+    # New additions
+    "Bitbucket", "TeamCity", "SonarQube", "Argo CD", "Azure DevOps", "Nomad", "Spinnaker"
 ]
 
 # Lista chmur obliczeniowych
 cloud_platforms = [
-    "AWS", "Azure", "GCP", "Heroku", "OpenStack", "DigitalOcean"
+    "AWS", "Azure", "GCP", "Heroku", "OpenStack", "DigitalOcean",
+    # New additions
+    "Google Cloud Platform", "Microsoft Azure", "Azure Monitor", "Vercel"
 ]
 
 # Lista baz danych
 databases = [
     "PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch", "SQLite",
-    "MariaDB", "Oracle DB", "Cassandra", "DynamoDB", "NoSQL"
+    "MariaDB", "Oracle DB", "Cassandra", "DynamoDB", "NoSQL",
+    # New additions
+    "ArangoDB", "Hazelcast", "Azure SQL", "MS SQL", "Redshift", "S3", "CosmosDB", "PL/SQL"
 ]
 
 # Lista systemów kontroli wersji i narzędzi CI/CD
 version_control_and_ci_cd = [
     "Git", "SVN", "GitHub Actions", "Bitbucket Pipelines", "CircleCI",
-    "TravisCI", "Github"
+    "TravisCI", "Github",
+    # New additions
+    "GitLab", "GitHub", "GitHub Enterprise"
 ]
 
 # Lista innych technologii
 other_technologies = [
-    "GraphQL", "REST API", "SOAP", "WebSockets", "RabbitMQ", "Kafka"
+    "GraphQL", "REST API", "SOAP", "WebSockets", "RabbitMQ", "Kafka",
+    # New additions
+    "WebAPI", "OpenVPN", "VBA", "Microservices"
 ]
+
+
+
+
 
 disqualifying_words = [
     "senior", "expert"
@@ -103,13 +128,23 @@ required_words = [
 ]
 
 my_knowledge = [
-    "Java", "Spring", "Spring Boot", "Hibernate", "JPA",
-    "Maven",
+    "Java", "Python", "JavaScript", "HTML", "CSS", "WordPress", "SQL", "Bash"
+
+    "Spring", "Spring Boot", "Hibernate", "JPA", "Maven",
     "RabbitMQ",  "Jackson",
-    "Python", "FastAPI", "Pandas", "NumPy", "SciPy",
-    "JavaScript", "React", "React.js",
-    "WordPress", "Elementor", "WooCommerce", "Gutenberg", "Gutenify",
-    "GCP", "REST API", "PostgreSQL", "SQL", "Git", "Github"
+
+    "FastAPI", "Pandas", "NumPy", "SciPy",
+
+    "React", "React.js",
+
+    "Elementor", "WooCommerce", "Gutenberg", "Gutenify",
+
+    "GCP", "Google Cloud Platform", "REST API", "PostgreSQL",
+    "Git", "Github",
+
+    "Docker", "Bootstrap", "Kubernetes",
+
+    "Microservices", "OpenVPN",
 ]
 
 
@@ -145,6 +180,199 @@ def get_nlp_model_for_text(language):
         print(f"Błąd podczas ładowania modelu spaCy dla języka {language}: {e}")
         # Możesz zwrócić `None` lub inny fallback tutaj, jeśli chcesz.
         return None
+
+
+def detectExperienceYears(job_offer, disable_OpenAI=True):
+    offerDescription = job_offer.description
+    offerLanguage = job_offer.language
+    if(disable_OpenAI):
+        offerExperienceYears = extract_experience_years_with_context_nlp(description=offerDescription, language_code=offerLanguage)
+    else:
+        extract_experience_years_with_context_nlp(description=offerDescription, language_code=offerLanguage)
+        offerExperienceYears = extract_experience_years_with_openai(description=offerDescription,
+                                                                    language_code=offerLanguage)
+
+def extract_experience_years_with_openai(description, language_code):
+    """
+    Extracts required years or months of experience from a job description using OpenAI's GPT model.
+
+    :param description: Job description as a string.
+    :param language_code: Language code of the description (e.g., 'pl' or 'en').
+    :return: List of extracted experience values in years.
+    """
+    # Prompt dostosowany do języka
+    if language_code == "pl":
+        prompt = f"""
+        W opisie oferty pracy poniżej znajdź wszystkie odniesienia do wymaganego doświadczenia zawodowego 
+        w latach lub miesiącach. Wyraź wynik w latach, uwzględniając konwersję miesięcy na lata (12 miesięcy = 1 rok). Jeśli brak informacji to wypisz 0. Jeśli jest podane w postaci zakresu (np. 3-4 lata) podaj niższą wartość.
+        Wypisz same liczby. Nie sumuj oddzielnych doświadczeń, lecz je wypisz. Oto opis oferty pracy:
+
+        {description}
+        """
+    else:
+        prompt = f"""
+        From the job description below, find all references to required professional experience 
+        in years or months. Express the result in years, including converting months into years 
+        (12 months = 1 year). If there is no information, print 0. In case of range (eg. 3-4 years), provide lower value. Provide only the numbers. Don't sum separate experiences, but write out. Here is the job description:
+
+        {description}
+        """
+    try:
+        client = OpenAI(
+            api_key=os.environ.get("OPENAI_API_KEY"),  # This is the default and can be omitted
+            organization=os.environ.get("OPENAI_ORG_ID"),
+        )
+        response = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt}
+                    ]
+                }
+            ],
+            model="gpt-4o-mini",
+        )
+        # Pobranie i przetworzenie odpowiedzi
+        extracted_text = response.choices[0].message.content.strip()
+        #print(extracted_text)
+        years = []
+        # Wyodrębnianie liczb z odpowiedzi
+        for part in extracted_text.split():
+            try:
+                years.append(float(part))
+            except ValueError:
+                pass  # Pomija fragmenty, które nie są liczbami
+        print(f"Years experience(OpenAI): {years}")
+        return years
+
+    except Exception as e:
+        # General exception handling
+        print(f"An error occurred: {e}")
+        return []
+def extract_experience_years_with_context_nlp(description, language_code):
+    """
+    Extracts required years or months of experience from a job description,
+    supporting both Polish and English languages.
+
+    Wyciąga wymagane lata lub miesiące doświadczenia z opisu oferty pracy,
+    obsługując języki polski i angielski.
+
+    Jak działa:
+    1. **Ładowanie modelu językowego**:
+       - Na podstawie podanego kodu języka (`language_code`) funkcja `get_nlp_model_for_text`
+         ładuje odpowiedni model spaCy (np. dla 'pl' lub 'en').
+
+    2. **Słowa kluczowe i jednostki czasu**:
+       - Słownik `keywords` zawiera:
+         - **Słowa kluczowe**: Wyrażenia związane z doświadczeniem (np. „doświadczenie”, „experience”).
+         - **Słowa wykluczające**: Frazy, które wskazują, że zdanie nie dotyczy wymagań doświadczenia
+           (np. „nasza firma ma 10 lat doświadczenia na rynku”).
+         - **Jednostki czasu**: Słowa takie jak „rok”, „lata”, „months” wraz z przelicznikiem na lata
+           (np. „m-cy” odpowiada 1/12 roku).
+
+    3. **Analiza tekstu z spaCy**:
+       - Tekst opisu (`description`) jest analizowany przez spaCy.
+       - Model dzieli tekst na zdania i tokeny (pojedyncze wyrazy, liczby itp.).
+
+    4. **Iteracja po zdaniach**:
+       - Funkcja przegląda każde zdanie w opisie:
+         - Szuka tokenów będących liczbami (`token.like_num`).
+         - Sprawdza, czy kolejny token jest jednostką czasu (np. „lata”, „years”).
+         - Analizuje kontekst zdania pod kątem obecności słów kluczowych (np. „doświadczenie”, „experience”)
+           i braku słów wykluczających.
+
+    5. **Konwersja na lata doświadczenia**:
+       - Jeśli zdanie spełnia kryteria, liczba (np. „3”) jest przeliczana na lata
+         na podstawie jednostki czasu (np. „m-cy” to 1/12 roku).
+       - Wynik jest dodawany do listy `years`.
+
+    6. **Zwracanie wyniku**:
+       - Funkcja zwraca listę wartości odpowiadających wymaganym latom doświadczenia w latach.
+
+    Przykład działania:
+    - Dla opisu w języku polskim:
+      ```python
+      description_pl = "Co najmniej 3-letnie doświadczenie zawodowe oraz 6 m-cy doświadczenia w implementacji rozwiązań."
+      extract_experience_years_with_context(description_pl, "pl")
+      # Wynik: [3.0, 0.5]
+      ```
+    - Dla opisu w języku angielskim:
+      ```python
+      description_en = "We require at least 4 years of experience in backend development and 6 months with Node.js."
+      extract_experience_years_with_context(description_en, "en")
+      # Wynik: [4.0, 0.5]
+      ```
+
+    Kluczowe punkty:
+    - Funkcja obsługuje dwa języki (polski i angielski).
+    - Odrzuca zdania niezwiązane z wymaganym doświadczeniem za pomocą słów wykluczających.
+    - Przelicza miesiące na lata, aby zwrócić spójny wynik.
+
+
+    :param description: Job description as a string.
+    :param language_code: Language code of the description (e.g., 'pl' or 'en').
+    :return: List of extracted experience values in years.
+    """
+
+
+    # Load the appropriate spaCy NLP model for the given language
+    nlp = get_nlp_model_for_text(language_code)
+
+    # keywords and timeunits for both languages (pl, en)
+    keywords = {
+        "pl": {
+            "experience": ["doświadczenie", "praca", "stanowisku", "poziom", "programowanie", "języku"],
+            "exclude": ["nasza firma", "jesteśmy na rynku", "lat na rynku"],
+            "time_units": {"lat": 1, "roku": 1, "lata": 1, "rok": 1, "m-cy": 1/12, "miesiące": 1/12, "miesięcy": 1/12}
+        },
+        "en": {
+            "experience": ["experience", "years", "months", "position", "role", "programming"],
+            "exclude": ["our company", "we have been in the market", "years in the market"],
+            "time_units": {"years": 1, "year": 1, "months": 1/12, "month": 1/12}
+        }
+    }
+
+    # Map words to numbers (English only for now)
+    word_to_number = {
+        "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
+        "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
+
+        "jeden": 1, "dwa": 2, "trzy": 3, "cztery": 4, "pięć": 5, "sześć": 6,
+        "siedem": 7, "osiem": 8, "dziewięć": 9, "dziesięć": 10, "jedynaście": 11, "dwanaście": 12
+    }
+
+    # Get the relevant keywords and time units based on the language
+    lang_data = keywords.get(language_code, keywords["en"])  # Default to English
+    experience_keywords = lang_data["experience"]
+    exclusion_keywords = lang_data["exclude"]
+    time_units = lang_data["time_units"]
+
+    # Process the description with spaCy
+    doc = nlp(description)
+    years = []
+
+    for sent in doc.sents:
+        for token in sent:
+            # Check if token is a number or a written number
+            try:
+                num_value = float(token.text)
+            except ValueError:
+                num_value = word_to_number.get(token.text.lower(), None)
+            # If a valid number is found
+            if num_value is not None:
+                next_token = token.nbor(1) if token.i + 1 < len(doc) else None
+                if next_token and next_token.text.lower() in time_units:
+                    context = sent.text.lower()
+                    # Check if the sentence contains relevant keywords
+                    if any(keyword in context for keyword in experience_keywords) and not any(
+                            exclusion in context for exclusion in exclusion_keywords):
+                        experience_in_years = num_value * time_units[next_token.text.lower()]
+                        years.append(round(experience_in_years, 2))
+
+    # Debug output for extracted years
+    print(f"Years experience(NLP): {years}")
+    return years
 
 
 def analyzeOfferDetails(offerLanguage, offerDescription, offerTitle, obtainedTechnologiesList=[]):
@@ -246,6 +474,7 @@ def filterJobOffer(job_offer):
         # w job_lvl
         for lvl in job_offer.job_level:
             if (lvl.lower() in word.lower()):
+                print(f"Oferta odrzucona z powodu poziomu dyskwalifikującego: {word}")
                 return False
 
 

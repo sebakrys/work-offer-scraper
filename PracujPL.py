@@ -14,7 +14,11 @@ from playwright.sync_api import sync_playwright
 import langid
 
 from JobOffer import JobOffer
-from OfferAnalyze import analyzeOfferDetails, filterJobOffer, detectSkillDeficiencies
+
+from OfferAnalyze import analyzeOfferDetails, filterJobOffer, detectSkillDeficiencies, \
+    extract_experience_years_with_context_nlp, \
+    extract_experience_years_with_openai, detectExperienceYears
+
 from database import save_job_offer_to_db
 from web import fetch_with_retries
 
@@ -31,6 +35,9 @@ pracujpl_joblvl_dictionary = {
     "starszy specjalista (Senior)" : "Senior",
     "senior specialist (Senior)" : "Senior"
 }
+
+
+all_tech = []
 
 
 def scrapeOfferDetails(url, date, company_url):
@@ -74,6 +81,10 @@ def scrapeOfferDetails(url, date, company_url):
     offerLanguage, languageConfidence = langid.classify(offerDescription)
 
 
+
+
+
+
     # get offer id from url "-127173516765732"
     match = re.search(r',(\d+)$', url)
     offer_id = 0
@@ -107,8 +118,10 @@ def scrapeOfferDetails(url, date, company_url):
 
     detected_technologies_direct_from_site_expected = [span.get_text(strip=True) for span in soup.find_all('span', {'data-test': 'item-technologies-expected'})]
     print(detected_technologies_direct_from_site_expected)#TODO mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
+    #all_tech.append(detected_technologies_direct_from_site_expected)
     detected_technologies_direct_from_site_optional = [span.get_text(strip=True) for span in soup.find_all('span', {'data-test': 'item-technologies-optional'})]
     #print(detected_technologies_direct_from_site_optional)#TODO mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
+    #all_tech.append(detected_technologies_direct_from_site_optional)
 
     analyzed_details = analyzeOfferDetails(offerLanguage, offerDescription, offerTitle, detected_technologies_direct_from_site_expected)
     detected_technologies = analyzed_details["detected_technologies"]
@@ -294,7 +307,7 @@ url = f"https://www.pracuj.pl/praca/{searchKeyword};kw/{location};wp?rd={distanc
 
 
 
-def run_PracujPL_scraper():
+def run_PracujPL_scraper(disable_OpenAI=True, updateExperienceYears=True):
     numberOfOffers, max_page = scrapeNumberOfOffers(urlForNumberOfOffers)
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url, numberOfOffers, max_page, repeat=0)
@@ -303,6 +316,8 @@ def run_PracujPL_scraper():
             if (filterJobOffer(job_offer)):
                 print("======================")
                 job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
+                if(updateExperienceYears): job_offer.experience_years = detectExperienceYears(job_offer, disable_OpenAI=disable_OpenAI)
+
                 print(job_offer.url)
                 job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
                     sum(len(value) for value in job_offer.detected_technologies.values())))

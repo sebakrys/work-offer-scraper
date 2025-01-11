@@ -17,23 +17,23 @@ from JobOffer import JobOffer
 
 from OfferAnalyze import analyzeOfferDetails, filterJobOffer, detectSkillDeficiencies, \
     extract_experience_years_with_context_nlp, \
-    extract_experience_years_with_openai, detectExperienceYears
+    extract_experience_years_with_openai, detectExperienceYears, generateSkillsSectionForCV
 
 from database import save_job_offer_to_db
 from web import fetch_with_retries
 
 pracujpl_joblvl_dictionary = {
-    "trainee" : "trainee",
-    "praktykant / stażysta" : "trainee",
+    "trainee" : "1trainee",
+    "praktykant / stażysta" : "1_trainee",
 
-    "junior specialist (Junior)" : "Junior",
-    "młodszy specjalista (Junior)" : "Junior",
+    "junior specialist (Junior)" : "3_Junior",
+    "młodszy specjalista (Junior)" : "3_Junior",
 
-    "specjalista (Mid / Regular)" : "Mid",
-    "specialist (Mid / Regular)" : "Mid",
+    "specjalista (Mid / Regular)" : "5_Mid",
+    "specialist (Mid / Regular)" : "5_Mid",
 
-    "starszy specjalista (Senior)" : "Senior",
-    "senior specialist (Senior)" : "Senior"
+    "starszy specjalista (Senior)" : "7_Senior",
+    "senior specialist (Senior)" : "7_Senior"
 }
 
 
@@ -319,6 +319,7 @@ def run_PracujPL_scraper(disable_OpenAI=True, updateExperienceYears=True, update
                 if(updateExperienceYears):
                     job_offer.experience_years = detectExperienceYears(job_offer, disable_OpenAI=disable_OpenAI)
                 print(job_offer.experience_years)
+                job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
                 print(job_offer.url)
                 job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
                     sum(len(value) for value in job_offer.detected_technologies.values())))

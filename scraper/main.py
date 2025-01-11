@@ -6,7 +6,7 @@ disable_OpenAI = not (input("Do you want to use OpenAI API (y/n)?").lower().stri
 updateExperienceYears = input("Do you want to update Experience Years(y/n)?").lower().strip() == 'y'
 updateInCaseOfExistingInDB = True
 
-run_LinkedIn_scraper(disable_OpenAI=disable_OpenAI, updateExperienceYears=updateExperienceYears, updateInCaseOfExistingInDB=updateInCaseOfExistingInDB)
+#run_LinkedIn_scraper(disable_OpenAI=disable_OpenAI, updateExperienceYears=updateExperienceYears, updateInCaseOfExistingInDB=updateInCaseOfExistingInDB)
 
 run_PracujPL_scraper(disable_OpenAI=disable_OpenAI, updateExperienceYears=updateExperienceYears, updateInCaseOfExistingInDB=updateInCaseOfExistingInDB)
 

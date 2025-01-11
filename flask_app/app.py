@@ -15,11 +15,13 @@ def get_data():
             {
                 "id": offer.id,
                 "applied": offer.applied,
+                "language": offer.language,
                 "url": offer.url,
                 "date": offer.date.isoformat() if offer.date else None,
                 "title": offer.title,
                 "skill_deficiencies": offer.skill_deficiencies,
                 "skill_percentage": offer.skill_percentage,
+                "skills_for_cv": offer.skills_for_cv,
                 "experience_years": offer.experience_years,
                 "organization": offer.organization,
                 "location": offer.location,

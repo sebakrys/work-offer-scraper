@@ -20,26 +20,27 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 # Definicja modelu JobOffer
-#TODO dodać kolumnę gdzie będzie zmodyfikowane umiejętności do CV za pomoca OpenAI API
+# TODO dodać kolumnę gdzie będzie zmodyfikowane umiejętności do CV za pomoca OpenAI API
 class JobOfferDB(Base):
     __tablename__ = "job_offers"
 
     id = Column(Integer, primary_key=True, index=True)
-    applied = Column(Boolean, default=False) #new
+    applied = Column(Boolean, default=False)  # new
     url = Column(Text, nullable=False)
     date = Column(Date)
     title = Column(Text)
     skill_deficiencies = Column(ARRAY(Text))
     skill_percentage = Column(Double)
+    skills_for_cv = Column(Text, default="")
     experience_years = Column(ARRAY(Double), default=[])
     organization = Column(Text)
     organization_url = Column(Text)
     location = Column(Text)
     language = Column(String(10))
     job_level = Column(ARRAY(Text))
-    employmentType = Column(ARRAY(Text), default=[]) #new (rodzaj zatrudnienia, np. Umowa o pracę, B2B)
-    workSchedules = Column(ARRAY(Text), default=[]) #new (Etat, pełny, niepełny)
-    workModes = Column(ARRAY(Text), default=[]) #new (Hybrydowo, zdalnie, stacjonarnie)
+    employmentType = Column(ARRAY(Text), default=[])  # new (rodzaj zatrudnienia, np. Umowa o pracę, B2B)
+    workSchedules = Column(ARRAY(Text), default=[])  # new (Etat, pełny, niepełny)
+    workModes = Column(ARRAY(Text), default=[])  # new (Hybrydowo, zdalnie, stacjonarnie)
     apply_url = Column(Text)
     web_id = Column(BigInteger)
     requirements = Column(ARRAY(Text))
@@ -48,7 +49,6 @@ class JobOfferDB(Base):
     source = Column(Text)
     first_scrape_date = Column(DateTime, default=func.now())  # Data pierwszego zrzutu
     scrape_date = Column(DateTime, default=func.now(), onupdate=func.now())  # Data ostatniej aktualizacji
-
 
 
 # Inicjalizacja bazy danych
@@ -75,7 +75,7 @@ def save_job_offer_to_db(job_offer, source, updateExperienceYears=True, updateIn
 
         if existing_offer:
             print(f"Oferta o ID {job_offer.web_id} już istnieje.")
-            if(updateInCaseOfExistingInDB):
+            if (updateInCaseOfExistingInDB):
                 print("Aktualizowanie...")
                 # Aktualizacja istniejącej oferty
                 existing_offer.url = job_offer.url
@@ -83,6 +83,7 @@ def save_job_offer_to_db(job_offer, source, updateExperienceYears=True, updateIn
                 existing_offer.title = job_offer.title
                 existing_offer.skill_deficiencies = job_offer.skill_deficiencies
                 existing_offer.skill_percentage = job_offer.skill_percentage
+                existing_offer.skills_for_cv = job_offer.skills_for_cv
                 if (updateExperienceYears):
                     existing_offer.experience_years = job_offer.experience_years
                 existing_offer.job_level = job_offer.job_level
@@ -107,6 +108,7 @@ def save_job_offer_to_db(job_offer, source, updateExperienceYears=True, updateIn
             title=job_offer.title,
             skill_deficiencies=job_offer.skill_deficiencies,
             skill_percentage=job_offer.skill_percentage,
+            skills_for_cv=job_offer.skills_for_cv,
             experience_years=job_offer.experience_years,
             job_level=job_offer.job_level,
             organization=job_offer.organization,

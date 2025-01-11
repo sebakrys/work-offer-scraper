@@ -7,6 +7,47 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <style>
+        pre {
+            white-space: pre-wrap; /* Zachowaj białe znaki i zawijanie wierszy */
+            word-wrap: break-word; /* Złam długie słowa, aby dopasować je do kontenera */
+        }
+    </style>
+    <script>
+        function handleApply(rowId) {
+    // Pobierz dane wiersza
+    const table = $('#jobTable').DataTable();
+    const rowData = table.row(function(idx, data) {
+        return data.id === rowId; // Znajdź wiersz na podstawie ID
+    }).data();
+
+    if (rowData) {
+        // Skopiuj zawartość skills_for_cv do schowka
+        navigator.clipboard.writeText(rowData.skills_for_cv.replaceAll("\u2022 ", ""))
+            .then(() => alert("Skills for CV copied to clipboard!"))
+            .catch(() => alert("Failed to copy to clipboard."));
+
+
+        $.ajax({
+            url: '/api/update_applied',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ id: rowId, applied: true }),
+            success: function(response) {
+                alert(response.message || 'Applied status updated successfully!');
+                // Opcjonalnie odśwież tabelę, aby zaktualizować checkbox
+                //table.ajax.reload();
+                $(`.applied-toggle[data-id="${rowId}"]`).prop('checked', true);
+
+            },
+            error: function() {
+                alert('Failed to update applied status.');
+            }
+        });
+
+    }
+}
+    </script>
 </head>
 <body>
     <h1>Job Offers</h1>
@@ -21,6 +62,8 @@
                 <th>Level</th>
                 <th>Location</th>
                 <th>Date</th>
+                <th>Skills for CV</th>
+                <th>Language</th>
                 <th>Applied</th>
                 <th>Apply URL</th>
             </tr>
@@ -45,14 +88,23 @@
                     return data ? data : 'N/A';
                 }},
                 {
+                    data: 'skills_for_cv',
+                    render: function(data) {
+                        data = data.replaceAll("\u2022 ", "")
+                        return `<pre>${data}</pre>`; // Opakowanie zawartości w znacznik <pre>
+                    }
+                },
+                { data: 'language' },
+                {
                     data: 'applied',
                     render: function(data, type, row) {
                         const checked = data ? 'checked' : '';
                         return `<input type="checkbox" class="applied-toggle" data-id="${row.id}" ${checked}>`;
                     }
                 },
-                { data: 'apply_url', render: function(data) {
-                    return `<a href="${data}" target="_blank">Apply</a>`;
+                { data: 'apply_url', render: function(data, type, row) {
+                    return `<a onclick="handleApply(${row.id})"
+href="${data}" target="_blank">Apply</a>`;
                 }},
             ],
             order: [[0, 'asc']]

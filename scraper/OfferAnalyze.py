@@ -540,3 +540,99 @@ def detectSkillDeficiencies(job_offer):
         print("Nie znaleziono braków w Twojej wiedzy dla tej oferty.")
 
     return missing_technologies
+
+def generateSkillsSectionForCV(job_offer):
+    """
+    generate Skills section for CV using OpenAI's GPT model.
+
+    :param job_offer: Job offer object
+    :return: String with skills section
+    """
+    language_code = job_offer.language
+    # Prompt dostosowany do języka
+    if language_code == "pl":
+        prompt = f"""
+        Na podstawie mojej listy umiejętności i wiedzy:
+        {my_knowledge}, Język angielski na poziomie B2 (Certyfikat TOEIC® Listening & Reading: 820),
+        Certyfikaty HackerRank: Python, Software Engineer, React, Java.
+        
+        Przygotuj sekcję „Umiejętności” do mojego CV. Użyj tylko tych umiejętności, które są istotne dla poniższej oferty pracy:
+        {job_offer.description}
+        Nie używaj żadnych umiejętności, których nie ma na mojej liście wiedzy.
+        Uwzględnij wyłącznie technologie i narzędzia, które są wymienione zarówno w ofercie pracy, jak i na mojej liście wiedzy.
+        Sekcja „Umiejętności” powinna być możliwie jak najkrótsza.
+        Na koniec podaj zwięzłą sekcję „Umiejętności” jako swoją ostateczną odpowiedź, niech zawiera 6-8 punktów.
+        Jako szablon wykorzystaj:
+        "
+•	Programowanie w Python, Java, C
+•	Zarządzanie projektami i koordynacja zespołów
+•	Biegłość w pracy z Git, Spring, React, MongoDB, PostgreSQL
+•	Certyfikaty HackerRank: Python, Software Engineer, React, Java
+•	Testowanie API za pomocą Postman
+•	Znajomość FastAPI, Docker and Kubernetes
+•	Praktyczna znajomość i umiejętność korzystania z usług Google Cloud
+•	Język angielski na poziomie B2 (Certyfikat TOEIC® Listening & Reading: 820)
+•	Doświadczenie w integracji systemów i tworzeniu API"
+
+Zacznij Sekcję „Umiejętności” słowem [START], a zakończ [END].
+        """
+    else:
+        prompt = f"""
+        Based on my list of skills, knowledge:
+        {my_knowledge}, English B2, TOEIC® Listening & Reading Certificate: 820,
+        HackerRank Certifications: Python, Software Engineer, React, Java.
+        Prepare "Skills" section for my CV. Use only skills relevant for job offer with description below:
+        {job_offer.description}
+        Do not use any skills that are not present in my knowledge.
+        Only include technologies and tools explicitly mentioned in both the job offer and my own knowledge list.
+        Make “Skills” section as short as possible.
+        Finally, provide a concise “Skills” section as your final answer, using 6-8 points.
+        As a template use following:
+        "
+•	Programming in X, Y, Z
+•	Project management and team coordination
+•	Proficiency in Git, Spring, React, MongoDB, PostgreSQL
+•	HackerRank Certifications: Python, Software Engineer, Java, React
+•	Familiarity with Docker and Kubernetes
+•	Practical knowledge and ability to utilize Google Cloud services.
+•	English B2, TOEIC® Listening & Reading Certificate: 820"
+
+At the beginning of “Skills” section use [START], and at end [END].
+        """
+    try:
+        client = OpenAI(
+            api_key=os.environ.get("OPENAI_API_KEY"),  # This is the default and can be omitted
+            organization=os.environ.get("OPENAI_ORG_ID"),
+        )
+        response = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt}
+                    ]
+                }
+            ],
+            model="gpt-4o-mini",
+        )
+        # Pobranie i przetworzenie odpowiedzi
+        extracted_text = response.choices[0].message.content.strip()
+        #print(prompt)
+        print(extracted_text)
+        skills=""
+
+        start = extracted_text.find("[START]") + len("[START]")  # Indeks po [START]
+        end = extracted_text.find("[END]")  # Indeks początku [STOP]
+        print(f"[START]:{start} [END]:{end}")
+
+        if start != -1 and end != -1:
+            skills = (extracted_text[start:end]).strip()
+            print(skills)
+        else:
+            print("No match found")
+        return skills
+
+    except Exception as e:
+        # General exception handling
+        print(f"An error occurred: {e}")
+        return ""

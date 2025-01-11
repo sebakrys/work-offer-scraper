@@ -78,7 +78,12 @@
             },
             columns: [
                 { data: 'id' },
-                { data: 'title' },
+                                {
+                    data: 'title',
+                    render: function(data, type, row) {
+                        return `<a href="${row.url}" target="_blank">${data}</a>`;
+                    }
+                },
                 { data: 'organization' },
                 { data: 'skill_percentage' },
                 { data: 'experience_years' },//TODO wyciagnąć jedną wartość lat wymaganych(średnia/min/max)

@@ -554,52 +554,51 @@ def generateSkillsSectionForCV(job_offer):
     # Prompt dostosowany do języka
     if language_code == "pl":
         prompt = f"""
-        Na podstawie mojej listy umiejętności i wiedzy:
-        {my_knowledge}, Język angielski na poziomie B2 (Certyfikat TOEIC® Listening & Reading: 820),
+        Na podstawie mojej wiedzy:
+        {my_knowledge}, English B2, TOEIC® Listening & Reading Certificate: 820,
         Certyfikaty HackerRank: Python, Software Engineer, React, Java.
-        
-        Przygotuj sekcję „Umiejętności” do mojego CV. Użyj tylko tych umiejętności, które są istotne dla poniższej oferty pracy:
-        {job_offer.description}
-        Nie używaj żadnych umiejętności, których nie ma na mojej liście wiedzy.
-        Uwzględnij wyłącznie technologie i narzędzia, które są wymienione zarówno w ofercie pracy, jak i na mojej liście wiedzy.
-        Sekcja „Umiejętności” powinna być możliwie jak najkrótsza.
-        Na koniec podaj zwięzłą sekcję „Umiejętności” jako swoją ostateczną odpowiedź, niech zawiera 6-8 punktów.
-        Jako szablon wykorzystaj:
-        "
-•	Programowanie w Python, Java, C
-•	Zarządzanie projektami i koordynacja zespołów
-•	Biegłość w pracy z Git, Spring, React, MongoDB, PostgreSQL
-•	Certyfikaty HackerRank: Python, Software Engineer, React, Java
-•	Testowanie API za pomocą Postman
-•	Znajomość FastAPI, Docker and Kubernetes
-•	Praktyczna znajomość i umiejętność korzystania z usług Google Cloud
-•	Język angielski na poziomie B2 (Certyfikat TOEIC® Listening & Reading: 820)
-•	Doświadczenie w integracji systemów i tworzeniu API"
 
-Zacznij Sekcję „Umiejętności” słowem [START], a zakończ [END].
+        Przygotuj sekcję „Umiejętności” do mojego CV. Użyj tylko umiejętności, które są wyraźnie wymienione w „mojej wiedzy” i jednocześnie są istotne dla oferty pracy opisanej poniżej:
+        {job_offer.description}
+
+        Upewnij się, że sekcja „Umiejętności” jest zwięzła (6-8 punktów) i dopasowana do wymagań oferty pracy. Nie dodawaj żadnych umiejętności, które nie są wyraźnie wymienione w „mojej wiedzy”.
+
+        Użyj poniższego szablonu jako wzoru dla finalnej odpowiedzi:
+        [START]
+        •	Programowanie w X, Y, Z
+        •	Zarządzanie projektami i koordynacja zespołów
+        •	Biegłość w Git, Spring, React, MongoDB, PostgreSQL
+        •	Certyfikaty HackerRank: Python, Software Engineer, Java, React
+        •	Znajomość Dockera i Kubernetes
+        •	Praktyczna wiedza i umiejętność korzystania z usług Google Cloud
+        •	English B2, TOEIC® Listening & Reading Certificate: 820
+        [END]
+
+        Sekcja „Umiejętności” powinna być maksymalnie dopasowana, profesjonalna i zwięzła. Podaj finalną odpowiedź w ramach [START] i [END].
         """
     else:
         prompt = f"""
-        Based on my list of skills, knowledge:
+        Based on my knowledge:
         {my_knowledge}, English B2, TOEIC® Listening & Reading Certificate: 820,
         HackerRank Certifications: Python, Software Engineer, React, Java.
-        Prepare "Skills" section for my CV. Use only skills relevant for job offer with description below:
-        {job_offer.description}
-        Do not use any skills that are not present in my knowledge.
-        Only include technologies and tools explicitly mentioned in both the job offer and my own knowledge list.
-        Make “Skills” section as short as possible.
-        Finally, provide a concise “Skills” section as your final answer, using 6-8 points.
-        As a template use following:
-        "
-•	Programming in X, Y, Z
-•	Project management and team coordination
-•	Proficiency in Git, Spring, React, MongoDB, PostgreSQL
-•	HackerRank Certifications: Python, Software Engineer, Java, React
-•	Familiarity with Docker and Kubernetes
-•	Practical knowledge and ability to utilize Google Cloud services.
-•	English B2, TOEIC® Listening & Reading Certificate: 820"
 
-At the beginning of “Skills” section use [START], and at end [END].
+        Prepare a "Skills" section for my CV. Use only skills explicitly mentioned in "my knowledge" that are also relevant to the job offer described below:
+        {job_offer.description}
+
+        Ensure that the "Skills" section is concise (6-8 points) and tailored to the job offer. Do not include any skills that are not explicitly listed in "my knowledge."
+
+        Follow this template for the final output:
+        [START]
+        •	Programming in X, Y, Z
+        •	Project management and team coordination
+        •	Proficiency in Git, Spring, React, MongoDB, PostgreSQL
+        •	HackerRank Certifications: Python, Software Engineer, Java, React
+        •	Familiarity with Docker and Kubernetes
+        •	Practical knowledge and ability to utilize Google Cloud services.
+        •	English B2, TOEIC® Listening & Reading Certificate: 820
+        [END]
+
+        Make the "Skills" section as relevant, professional, and succinct as possible. Provide the final answer between [START] and [END].
         """
     try:
         client = OpenAI(

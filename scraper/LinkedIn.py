@@ -17,7 +17,7 @@ from JobOffer import JobOffer
 from OfferAnalyze import analyzeOfferDetails, filterJobOffer, detectSkillDeficiencies, \
     extract_experience_years_with_context_nlp, extract_experience_years_with_openai, detectExperienceYears, \
     generateSkillsSectionForCV
-from database import save_job_offer_to_db
+from database import save_job_offer_to_db, checkIfOfferExistsInDB
 from web import fetch_with_retries
 
 
@@ -223,10 +223,12 @@ url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?k
 def run_LinkedIn_scraper(disable_OpenAI=True, updateExperienceYears=True, updateInCaseOfExistingInDB=True):
     numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
     if (numberOfOffers):
-        offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=0)
+        offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=10)
         for index, offer in enumerate(offers):
             job_offer = scrapeOfferDetails(offer[0], offer[1])
-            if (filterJobOffer(job_offer)):
+            if (filterJobOffer(job_offer)
+                    and
+                    (not checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url).exists or updateInCaseOfExistingInDB)):
                 print("======================")
                 job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
                 if(updateExperienceYears):

@@ -12,6 +12,8 @@ import subprocess
 # Mapowanie języków na modele spaCy
 from openai import OpenAI
 
+from scraper.database import checkIfOfferExistsInDB
+
 LANGUAGE_MODEL_MAP = {
     "pl": "pl_core_news_sm",
     "en": "en_core_web_sm"

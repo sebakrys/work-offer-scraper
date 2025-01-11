@@ -20,7 +20,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 # Definicja modelu JobOffer
-# TODO dodać kolumnę gdzie będzie zmodyfikowane umiejętności do CV za pomoca OpenAI API
+
 class JobOfferDB(Base):
     __tablename__ = "job_offers"
 
@@ -59,6 +59,36 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
+def checkIfOfferExistsInDB(web_id, url):
+    """
+    checks if offer with following `web_id` or `url` exists in data base.
+
+    :param web_id: ID from web to check.
+    :param url: URL of offer to check.
+    :return: True, if offer exists, False if it doesn't.
+    """
+    session = SessionLocal()
+    try:
+        # Sprawdzenie, czy oferta już istnieje w bazie danych
+        existing_offer = session.query(JobOfferDB).filter(
+            (JobOfferDB.web_id == web_id) | (JobOfferDB.url == url)
+        ).first()
+        return type("OfferCheckResult", (object,), {
+            "exists": existing_offer is not None,
+            "offer": existing_offer
+        })()
+    except Exception as e:
+        session.rollback()
+        print(f"Błąd podczas wczytywania oferty: {e}")
+        return type("OfferCheckResult", (object,), {
+            "exists": False,
+            "offer": None
+        })()
+    finally:
+        session.close()
+
+
+
 def save_job_offer_to_db(job_offer, source, updateExperienceYears=True, updateInCaseOfExistingInDB=True):
     """
     Zapisuje ofertę pracy do bazy danych.
@@ -68,12 +98,12 @@ def save_job_offer_to_db(job_offer, source, updateExperienceYears=True, updateIn
     """
     session = SessionLocal()
     try:
-        # Sprawdzenie, czy oferta już istnieje w bazie danych
-        existing_offer = session.query(JobOfferDB).filter(
-            (JobOfferDB.web_id == job_offer.web_id) | (JobOfferDB.url == job_offer.url)
-        ).first()
 
-        if existing_offer:
+        # Sprawdzenie, czy oferta już istnieje w bazie danych
+        offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url)
+
+        if offerExists.exists:
+            existing_offer = offerExists.offer
             print(f"Oferta o ID {job_offer.web_id} już istnieje.")
             if (updateInCaseOfExistingInDB):
                 print("Aktualizowanie...")

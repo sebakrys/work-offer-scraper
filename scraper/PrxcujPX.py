@@ -389,27 +389,28 @@ url = f"https://www.pracuj.pl/praca/{searchKeyword};kw/{location};wp?rd={distanc
 
 
 
-def run_PracujPL_scraper(disable_OpenAI=True, updateExperienceYears=True, updateInCaseOfExistingInDB=True):
+def run_PracujPL_scraper(disable_OpenAI=True, updateExperienceYears=True, updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
     numberOfOffers, max_page = scrapeNumberOfOffers(urlForNumberOfOffers)
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url, numberOfOffers, max_page, repeat=1)
         for index, offer in enumerate(offers):
             job_offer = scrapeOfferDetails(offer[0], offer[1], offer[2])
-            if (filterJobOffer(job_offer)
-                    and
-                    ((not checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url).exists) or updateInCaseOfExistingInDB)):
-                print("======================")
-                job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
-                if(updateExperienceYears):
-                    job_offer.experience_years = detectExperienceYears(job_offer, disable_OpenAI=disable_OpenAI)
-                print(job_offer.experience_years)
-                job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
-                print(job_offer.url)
-                job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
-                    sum(len(value) for value in job_offer.detected_technologies.values())))
-                print(job_offer.skill_percentage)
-                print(
-                    f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
-                print(
-                    f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
-                save_job_offer_to_db(job_offer, "Pracuj.pl", updateExperienceYears=updateExperienceYears, updateInCaseOfExistingInDB=updateInCaseOfExistingInDB)
+            if (filterJobOffer(job_offer)):
+                offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url)
+                if ((not offerExists.exists) or updateInCaseOfExistingInDB):
+                    print("======================")
+                    job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
+                    if(updateOpenAIApiPart or (not offerExists.exists)):
+                        if(updateExperienceYears):
+                            job_offer.experience_years = detectExperienceYears(job_offer, disable_OpenAI=disable_OpenAI)
+                        print(job_offer.experience_years)
+                        job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
+                    print(job_offer.url)
+                    job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
+                        sum(len(value) for value in job_offer.detected_technologies.values())))
+                    print(job_offer.skill_percentage)
+                    print(
+                        f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
+                    print(
+                        f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
+                    save_job_offer_to_db(job_offer, "Pracuj.pl", updateExperienceYears=updateExperienceYears, updateInCaseOfExistingInDB=updateInCaseOfExistingInDB)

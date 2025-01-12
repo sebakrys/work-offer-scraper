@@ -90,7 +90,7 @@ def checkIfOfferExistsInDB(web_id, url, close_session_at_the_end=True):
 
 
 
-def save_job_offer_to_db(job_offer, source, updateExperienceYears=True, updateInCaseOfExistingInDB=True):
+def save_job_offer_to_db(job_offer, source, updateExperienceYears=True, updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
     """
     Zapisuje ofertę pracy do bazy danych.
 
@@ -115,16 +115,16 @@ def save_job_offer_to_db(job_offer, source, updateExperienceYears=True, updateIn
                 existing_offer.skill_deficiencies = job_offer.skill_deficiencies
                 existing_offer.skill_percentage = job_offer.skill_percentage
                 existing_offer.skills_for_cv = job_offer.skills_for_cv
-                if (updateExperienceYears):
-                    existing_offer.experience_years = job_offer.experience_years
                 existing_offer.job_level = job_offer.job_level
                 existing_offer.organization = job_offer.organization
                 existing_offer.organization_url = job_offer.organization_url
                 existing_offer.location = job_offer.location
                 existing_offer.language = job_offer.language
-                existing_offer.employmentType = job_offer.employmentType  # new (rodzaj zatrudnienia, np. Umowa o pracę, B2B)
-                existing_offer.workSchedules = job_offer.workSchedules  # new (Etat, pełny, niepełny)
-                existing_offer.workModes = job_offer.workModes  # new (Hybrydowo, zdalnie, stacjonarnie)
+                if (updateOpenAIApiPart):
+                    existing_offer.experience_years = job_offer.experience_years
+                    existing_offer.employmentType = job_offer.employmentType  # new (rodzaj zatrudnienia, np. Umowa o pracę, B2B)
+                    existing_offer.workSchedules = job_offer.workSchedules  # new (Etat, pełny, niepełny)
+                    existing_offer.workModes = job_offer.workModes  # new (Hybrydowo, zdalnie, stacjonarnie)
                 existing_offer.apply_url = job_offer.apply_url
                 existing_offer.requirements = job_offer.requirements
                 existing_offer.detected_technologies = job_offer.detected_technologies

@@ -146,7 +146,7 @@ my_knowledge = [
 
     "Docker", "Bootstrap", "Kubernetes",
 
-    "Microservices", "OpenVPN",
+    "Microservices", "OpenVPN", "OpenAI API", "OpenAI"
 ]
 
 
@@ -382,6 +382,10 @@ def analyzeOfferDetails(offerLanguage, offerDescription, offerTitle, obtainedTec
     """
     Analyzes the details of a job offer in terms of requirements and technologies, including the job title.
     Analizuje szczegóły oferty pracy pod kątem wymagań i technologii, uwzględniając tytuł oferty.
+
+    requirements -  are in form of sentences
+    detected_technologies - are in form of keywords (like Java, Python)
+
     :param offerLanguage: Język tekstu (np. "en", "pl").
     :param offerDescription: Opis oferty pracy jako tekst.
     :param offerTitle: Tytuł oferty pracy jako tekst.

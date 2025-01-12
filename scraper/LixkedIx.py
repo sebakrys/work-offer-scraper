@@ -23,10 +23,49 @@ from web import fetch_with_retries
 
 linkedin_joblvl_dictionary = {
     "Początkujący" : "3_Junior",
+    "Entry level" : "3_Junior",
 
     "Kadra średniego szczebla" : "5_Mid",
+    "Mid-Senior level" : "5_Mid",
 
     "Specjalista" : "7_Senior",
+}
+
+linkedin_WorkSchedules_dictionary = {
+    "Pełny etat" : "1_Full-time",
+    "Full-time" : "1_Full-time",
+
+    "Niepełny etat" : "2_Part-time",
+    "Part-time" : "2_Part-time",
+
+    "Praca tymczasowa": "3_Temporary",
+    "Temporary": "3_Temporary",
+
+    "Staż" : "4_Internship",
+    "Internship" : "4_Internship",
+
+    "Zlecenie" : "5_Contract",
+    "Contract" : "5_Contract",
+
+    "Wolontariusz" : "6_Volunteer",
+    "Volunteer" : "6_Volunteer",
+
+    "Inna opcja": "7_Other",
+    "Other": "7_Other",
+
+}
+
+
+linkedin_employmentType_dictionary = {
+    "1_Full-time" : "1_UoP",
+    "2_Part-time" : "1_UoP",
+    "3_Temporary" : "1_UoP",
+
+
+    "4_Internship" : "4_Internship",
+    "5_Contract" : "5_Contract",
+    "6_Volunteer": "6_Volunteer",
+    "7_Other":"7_Other",
 }
 
 def scrapeOfferDetails(url, date):
@@ -67,9 +106,26 @@ def scrapeOfferDetails(url, date):
             soup.find("span", {"class", "description__job-criteria-text"}).text.strip())
     ]
 
-    #TODO add employmentType (rodzaj zatrudnienia, np. Umowa o pracę, B2B) [Dotyczy wszytskich stron]
-    # TODO add workSchedules (Etat, pełny, niepełny) [Dotyczy wszytskich stron]
-    # TODO add workModes (Hybrydowo, zdalnie, stacjonarnie) [Dotyczy wszytskich stron]
+    #On LinkedIn workSchedules and employmentType are connected
+    job_criteria_texts = soup.find_all("span", {"class", "description__job-criteria-text"})
+    if len(job_criteria_texts) > 1:
+        work_schedule_text = job_criteria_texts[1].text.strip()
+
+        offerWorkSchedules = [
+            linkedin_WorkSchedules_dictionary.get(work_schedule_text, work_schedule_text)
+        ]
+
+        offerEmploymentType = [
+            linkedin_employmentType_dictionary.get(offerWorkSchedules[0], offerWorkSchedules[0])
+        ]
+    else:
+        offerWorkSchedules = []
+        offerEmploymentType = []
+
+    print(offerWorkSchedules)
+    print(offerEmploymentType)
+
+    # TODO add workModes (Hybrydowo, zdalnie, stacjonarnie) [Dotyczy wszytskich stron] - dla LinkedIn, bez logowania nie ma opcji
 
 
 
@@ -109,6 +165,8 @@ def scrapeOfferDetails(url, date):
         web_id=offer_id,
         requirements=requirements,
         detected_technologies=detected_technologies,
+        workSchedules=offerWorkSchedules,
+        employmentType=offerEmploymentType
     )
     # Debugging: Wyświetlenie informacji o ofercie
     #print(f"Parsed JobOffer: {job_offer}")
@@ -223,12 +281,12 @@ url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?k
 def run_LinkedIn_scraper(disable_OpenAI=True, updateExperienceYears=True, updateInCaseOfExistingInDB=True):
     numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
     if (numberOfOffers):
-        offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=10)
+        offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=1)
         for index, offer in enumerate(offers):
             job_offer = scrapeOfferDetails(offer[0], offer[1])
             if (filterJobOffer(job_offer)
                     and
-                    (not checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url).exists or updateInCaseOfExistingInDB)):
+                    ((not checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url).exists) or updateInCaseOfExistingInDB)):
                 print("======================")
                 job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
                 if(updateExperienceYears):

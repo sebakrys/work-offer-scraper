@@ -59,7 +59,7 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
-def checkIfOfferExistsInDB(web_id, url):
+def checkIfOfferExistsInDB(web_id, url, close_session_at_the_end=True):
     """
     checks if offer with following `web_id` or `url` exists in data base.
 
@@ -85,7 +85,8 @@ def checkIfOfferExistsInDB(web_id, url):
             "offer": None
         })()
     finally:
-        session.close()
+        if(close_session_at_the_end):
+            session.close()
 
 
 
@@ -100,10 +101,10 @@ def save_job_offer_to_db(job_offer, source, updateExperienceYears=True, updateIn
     try:
 
         # Sprawdzenie, czy oferta już istnieje w bazie danych
-        offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url)
+        offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url, close_session_at_the_end=False)
 
         if offerExists.exists:
-            existing_offer = offerExists.offer
+            existing_offer = session.merge(offerExists.offer)
             print(f"Oferta o ID {job_offer.web_id} już istnieje.")
             if (updateInCaseOfExistingInDB):
                 print("Aktualizowanie...")
@@ -121,6 +122,9 @@ def save_job_offer_to_db(job_offer, source, updateExperienceYears=True, updateIn
                 existing_offer.organization_url = job_offer.organization_url
                 existing_offer.location = job_offer.location
                 existing_offer.language = job_offer.language
+                existing_offer.employmentType = job_offer.employmentType  # new (rodzaj zatrudnienia, np. Umowa o pracę, B2B)
+                existing_offer.workSchedules = job_offer.workSchedules  # new (Etat, pełny, niepełny)
+                existing_offer.workModes = job_offer.workModes  # new (Hybrydowo, zdalnie, stacjonarnie)
                 existing_offer.apply_url = job_offer.apply_url
                 existing_offer.requirements = job_offer.requirements
                 existing_offer.detected_technologies = job_offer.detected_technologies
@@ -145,12 +149,16 @@ def save_job_offer_to_db(job_offer, source, updateExperienceYears=True, updateIn
             organization_url=job_offer.organization_url,
             location=job_offer.location,
             language=job_offer.language,
+            employmentType=job_offer.employmentType,  # new (rodzaj zatrudnienia, np. Umowa o pracę, B2B)
+            workSchedules = job_offer.workSchedules,  # new (Etat, pełny, niepełny)
+            workModes = job_offer.workModes,  # new (Hybrydowo, zdalnie, stacjonarnie)
             apply_url=job_offer.apply_url,
             web_id=job_offer.web_id,
             requirements=job_offer.requirements,
             detected_technologies=job_offer.detected_technologies,
             description=job_offer.description,
-            source=source
+            source=source,
+
         )
         session.add(new_offer)
         session.commit()

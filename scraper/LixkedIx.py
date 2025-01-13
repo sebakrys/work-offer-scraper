@@ -65,7 +65,7 @@ linkedin_employmentType_dictionary = {
     "4_Internship" : "4_Internship",
     "5_Contract" : "5_Contract",
     "6_Volunteer": "6_Volunteer",
-    "7_Other":"7_Other",
+    "7_Other":"7_Other/Any",
 }
 
 def scrapeOfferDetails(url, date):

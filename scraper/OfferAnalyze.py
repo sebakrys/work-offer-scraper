@@ -1,3 +1,4 @@
+import hashlib
 import os
 import re
 import string
@@ -30,7 +31,11 @@ programming_languages = [
     "Python", "JavaScript", "Java", "C#", "Ruby", "PHP",
     "TypeScript", "C++", "R", "Go", "Swift", "Kotlin",
     "Rust", "Scala", "WordPress", "SQL",
-    "HTML", "CSS", "Bash", "Perl", "Haskell"
+    "HTML", "CSS", "Bash", "Perl", "Haskell",
+    #NEW
+
+    "C", "cobol", "delphi", "groovy", "vb", "vb.net", "x++", "abap",
+    "objective-c", "shell", "powershell", "dart"
 ]
 
 # Lista frameworków i bibliotek
@@ -51,7 +56,7 @@ frameworks = [
     # PHP frameworks
     "Laravel", "Symfony", "CodeIgniter",
     # TypeScript frameworks
-    "NestJS", "Angular",
+    "NestJS",
     # C++ frameworks
     "Qt", "Boost",
     # R frameworks
@@ -61,48 +66,65 @@ frameworks = [
     # Swift frameworks
     "SwiftUI", "Vapor",
     # Kotlin frameworks
-    "Ktor", "Spring Boot",
+    "Ktor",
     # Rust frameworks
     "Actix", "Rocket", "Tokio",
     # Scala frameworks
     "Akka", "Play Framework", "Slick",
     # WordPress frameworks
     "Elementor", "WooCommerce", "Gutenberg", "Gutenify",
-    # New additions
+
     "Cypress", "Jest", "Bootstrap", "Tailwind", "Next.js",
     "Nest.js", "RxJS", "NgRx", "Prisma", "OpenAPI", "Redux",
-    "Foundation", "Blazor"
+    "Foundation",
+    #NEW
+    "selenium", "cordova", "ionic", "micronaut", "quarkus", "express.js", "fastify",
+    "playwright", "playwright/selenium", "angularjs", "angular.js", "angular material",
+    "tailwind css", "material ui", "mui", "nuxt.js", "gatsby", "adonis",
+    "vuex", "mobx", "spring framework", "serverless", "django rest framework"
 ]
 
 # Lista narzędzi DevOps i konteneryzacji
 devops_tools = [
     "Docker", "Kubernetes", "Jenkins", "GitLab CI/CD", "Ansible", "Terraform",
     "Helm", "Prometheus", "Grafana",
-    # New additions
-    "Bitbucket", "TeamCity", "SonarQube", "Argo CD", "Azure DevOps", "Nomad", "Spinnaker"
+
+    "Bitbucket", "TeamCity", "SonarQube", "Argo CD", "Azure DevOps", "Nomad", "Spinnaker",
+    #NEW
+    "openshift", "rancher", "circleci", "github actions", "gitlab ci",
+    "argo rollouts", "flux", "tekton", "octopus deploy", "puppet",
+    "saltstack"
 ]
 
 # Lista chmur obliczeniowych
 cloud_platforms = [
     "AWS", "Azure", "GCP", "Heroku", "OpenStack", "DigitalOcean",
-    # New additions
-    "Google Cloud Platform", "Microsoft Azure", "Azure Monitor", "Vercel"
+
+    "Google Cloud Platform", "Microsoft Azure", "Azure Monitor", "Vercel",
+    #NEW
+    "amazon aws", "google cloud", "azure cloud", "microsoft azure cloud",
+    "ibm cloud", "oracle cloud", "linode"
 ]
 
 # Lista baz danych
 databases = [
     "PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch", "SQLite",
     "MariaDB", "Oracle DB", "Cassandra", "DynamoDB", "NoSQL",
-    # New additions
-    "ArangoDB", "Hazelcast", "Azure SQL", "MS SQL", "Redshift", "S3", "CosmosDB", "PL/SQL"
+
+    "ArangoDB", "Hazelcast", "Azure SQL", "MS SQL", "Redshift", "S3", "CosmosDB", "PL/SQL",
+    #NEW
+    "ms sql server", "mssql", "db2", "hive", "hdfs", "snowflake",
+    "bigquery", "google bigquery", "sap hana"
 ]
 
 # Lista systemów kontroli wersji i narzędzi CI/CD
 version_control_and_ci_cd = [
     "Git", "SVN", "GitHub Actions", "Bitbucket Pipelines", "CircleCI",
     "TravisCI", "Github",
-    # New additions
-    "GitLab", "GitHub", "GitHub Enterprise"
+
+    "GitLab", "GitHub Enterprise",
+    #NEW
+    "mercurial", "perforce", "tfs"
 ]
 
 # Lista innych technologii
@@ -639,3 +661,28 @@ def generateSkillsSectionForCV(job_offer):
         # General exception handling
         print(f"An error occurred: {e}")
         return ""
+
+
+def generate_web_id_from_text(text, max_digits=18):
+    """
+    Converts a text input into a unique numeric value, constrained to fit within a specified number of digits.
+    Designed to avoid exceeding the BIGINT range in PostgreSQL.
+
+    :param text: The input text to be converted.
+    :param max_digits: The maximum number of digits for the result (default is 18, suitable for PostgreSQL BIGINT).
+    :return: A unique integer derived from the input text.
+    """
+    # Generate an MD5 hash of the input text. MD5 produces a 128-bit hash in hexadecimal format.
+    hashed_value = hashlib.md5(text.encode()).hexdigest()
+
+    # Convert the hexadecimal hash into an integer.
+    numeric_value = int(hashed_value, 16)
+
+    # Define the maximum value based on the desired number of digits.
+    # For 18 digits, this corresponds to 10^18 - 1.
+    max_value = 10 ** max_digits - 1
+
+    # Use modulo operation to ensure the resulting number is within the desired range.
+    limited_value = numeric_value % max_value
+
+    return limited_value

@@ -20,6 +20,7 @@ from OfferAnalyze import analyzeOfferDetails, filterJobOffer, detectSkillDeficie
     extract_experience_years_with_openai, detectExperienceYears, generateSkillsSectionForCV
 
 from database import save_job_offer_to_db, checkIfOfferExistsInDB
+from scraper.shared import all_tech
 from web import fetch_with_retries
 
 pracujpl_joblvl_dictionary = {
@@ -47,7 +48,7 @@ pracujpl_employmentType_dictionary = {
     "umowa o staż / praktyki":"4_Internship",
     "umowa zlecenie":"5_Contract",
     "umowa agencyjna":"8_agency_agreement",
-    "umowa o pracę tymczasową":"9_praca_tymczasowa",
+    "umowa o pracę tymczasową":"9_praca_tymczasowa"
 }
 
 
@@ -56,7 +57,7 @@ pracujpl_WorkSchedules_dictionary = {
     "pełny etat" : "1_Full-time",
     "full-time" : "1_Full-time",
     "część etatu" : "2_Part-time",
-    "dodatkowa / tymczasowa": "3_Temporary",
+    "dodatkowa / tymczasowa": "3_Temporary"
 
 }
 
@@ -77,7 +78,6 @@ pracujpl_WorkModes_dictionary = {
 
 
 
-all_tech = []
 
 
 def scrapeOfferDetails(url, date, company_url):
@@ -195,9 +195,11 @@ def scrapeOfferDetails(url, date, company_url):
     detected_technologies_direct_from_site_expected = [span.get_text(strip=True) for span in soup.find_all('span', {'data-test': 'item-technologies-expected'})]
     print(detected_technologies_direct_from_site_expected)# mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
     #all_tech.append(detected_technologies_direct_from_site_expected)
+    all_tech.update(detected_technologies_direct_from_site_expected)#TODO Temporary
     detected_technologies_direct_from_site_optional = [span.get_text(strip=True) for span in soup.find_all('span', {'data-test': 'item-technologies-optional'})]
     #print(detected_technologies_direct_from_site_optional)# mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
-    #all_tech.append(detected_technologies_direct_from_site_optional)
+    all_tech.update(detected_technologies_direct_from_site_optional)#TODO temporary
+    print(all_tech)
 
     analyzed_details = analyzeOfferDetails(offerLanguage, offerDescription, offerTitle, detected_technologies_direct_from_site_expected)
     detected_technologies = analyzed_details["detected_technologies"]

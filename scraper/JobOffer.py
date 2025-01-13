@@ -18,9 +18,9 @@ class JobOffer:
         self.skill_deficiencies = skill_deficiencies
         self.skill_percentage = skill_percentage
         self.skills_for_cv = skills_for_cv
-        self.experience_years = experience_years,
-        self.employmentType = employmentType,
-        self.workSchedules = workSchedules,
+        self.experience_years = experience_years
+        self.employmentType = employmentType
+        self.workSchedules = workSchedules
         self.workModes = workModes
 
     def __repr__(self):
@@ -28,6 +28,12 @@ class JobOffer:
                 f"umiejetnosci={self.skill_percentage}"
                 f"url={self.url}, date={self.date}, location={self.location}, "
                 f"language={self.language}, web_id={self.web_id}, date={self.date}, requirements={self.requirements}, detected_technologies={self.detected_technologies})")
+
+    def __eq__(self, other):
+        return isinstance(other, JobOffer) and self.url == other.url
+
+    def __hash__(self):
+        return hash(self.url)
 
     def to_dict(self):
         """Convert the object to a dictionary."""

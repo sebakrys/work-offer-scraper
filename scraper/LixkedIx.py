@@ -278,7 +278,7 @@ url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?k
 # scrapeOffersList(url)
 
 
-def run_LinkedIn_scraper(disable_OpenAI=True, updateExperienceYears=True, updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
+def run_LinkedIn_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
     numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=1)
@@ -290,8 +290,7 @@ def run_LinkedIn_scraper(disable_OpenAI=True, updateExperienceYears=True, update
                     print("======================")
                     job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
                     if(updateOpenAIApiPart or (not offerExists.exists)):
-                        if(updateExperienceYears):
-                            job_offer.experience_years = detectExperienceYears(job_offer, disable_OpenAI=disable_OpenAI)
+                        job_offer.experience_years = detectExperienceYears(job_offer)
                         print(job_offer.experience_years)
                         job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
                     print(job_offer.url)
@@ -302,4 +301,4 @@ def run_LinkedIn_scraper(disable_OpenAI=True, updateExperienceYears=True, update
                         f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
                     print(
                         f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
-                    save_job_offer_to_db(job_offer, "LinkedIn", updateExperienceYears=updateExperienceYears, updateInCaseOfExistingInDB=updateInCaseOfExistingInDB)
+                    save_job_offer_to_db(job_offer, "LinkedIn", updateInCaseOfExistingInDB=updateInCaseOfExistingInDB, updateOpenAIApiPart=updateOpenAIApiPart)

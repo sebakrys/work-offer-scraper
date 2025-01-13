@@ -389,7 +389,7 @@ url = f"https://www.pracuj.pl/praca/{searchKeyword};kw/{location};wp?rd={distanc
 
 
 
-def run_PracujPL_scraper(disable_OpenAI=True, updateExperienceYears=True, updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
+def run_PracujPL_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
     numberOfOffers, max_page = scrapeNumberOfOffers(urlForNumberOfOffers)
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url, numberOfOffers, max_page, repeat=1)
@@ -401,8 +401,7 @@ def run_PracujPL_scraper(disable_OpenAI=True, updateExperienceYears=True, update
                     print("======================")
                     job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
                     if(updateOpenAIApiPart or (not offerExists.exists)):
-                        if(updateExperienceYears):
-                            job_offer.experience_years = detectExperienceYears(job_offer, disable_OpenAI=disable_OpenAI)
+                        job_offer.experience_years = detectExperienceYears(job_offer)
                         print(job_offer.experience_years)
                         job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
                     print(job_offer.url)
@@ -413,4 +412,4 @@ def run_PracujPL_scraper(disable_OpenAI=True, updateExperienceYears=True, update
                         f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
                     print(
                         f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
-                    save_job_offer_to_db(job_offer, "Pracuj.pl", updateExperienceYears=updateExperienceYears, updateInCaseOfExistingInDB=updateInCaseOfExistingInDB)
+                    save_job_offer_to_db(job_offer, "Pracuj.pl", updateInCaseOfExistingInDB=updateInCaseOfExistingInDB, updateOpenAIApiPart=updateOpenAIApiPart)

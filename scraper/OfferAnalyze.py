@@ -184,14 +184,12 @@ def get_nlp_model_for_text(language):
         return None
 
 
-def detectExperienceYears(job_offer, disable_OpenAI=True):
+def detectExperienceYears(job_offer):
     offerDescription = job_offer.description
     offerLanguage = job_offer.language
-    if(disable_OpenAI):
-        offerExperienceYears = extract_experience_years_with_context_nlp(description=offerDescription, language_code=offerLanguage)
-    else:
-        extract_experience_years_with_context_nlp(description=offerDescription, language_code=offerLanguage)
-        offerExperienceYears = extract_experience_years_with_openai(description=offerDescription,
+
+    extract_experience_years_with_context_nlp(description=offerDescription, language_code=offerLanguage) #alternative without Open AI
+    offerExperienceYears = extract_experience_years_with_openai(description=offerDescription,
                                                                     language_code=offerLanguage)
     return offerExperienceYears
 

@@ -1,4 +1,5 @@
 # https://www.linkedin.com/jobs/search?keywords=Developer&location=%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska&distance=25
+import datetime
 import json
 import os
 import re
@@ -211,7 +212,7 @@ def scrapeOffersList(url):
 
         # Wyciągnięcie daty publikacji
         time_element = card.find('time', {'class': 'job-search-card__listdate'})
-        offer_date = time_element['datetime'] if time_element else None
+        offer_date = time_element['datetime'] if time_element else datetime.date.today().strftime('%Y-%m-%d')
 
         if offer_url:
             offers.append({

@@ -258,36 +258,6 @@ def scrapeNumberOfOffers(
     return number_of_offers, int(max_page)
 
 
-def find_path_to_key(data, target_key, target_value=None, current_path=""):
-    """
-    Znajduje ścieżkę do danego klucza (i opcjonalnie wartości) w drzewiastym JSON-ie.
-
-    :param data: Obiekt JSON (słownik lub lista).
-    :param target_key: Klucz, którego szukamy.
-    :param target_value: Wartość, którą opcjonalnie chcemy dopasować.
-    :param current_path: Aktualna ścieżka w przeszukiwanym JSON-ie.
-    :return: Ścieżka do klucza lub None.
-    """
-    if isinstance(data, dict):
-        for key, value in data.items():
-            new_path = f"{current_path}.{key}" if current_path else key
-            if key == target_key:
-                if target_value is None or value == target_value:
-                    return new_path
-            # Rekursja dla zagnieżdżonego słownika
-            result = find_path_to_key(value, target_key, target_value, new_path)
-            if result:
-                return result
-    elif isinstance(data, list):
-        for index, item in enumerate(data):
-            new_path = f"{current_path}[{index}]"
-            # Rekursja dla każdego elementu listy
-            result = find_path_to_key(item, target_key, target_value, new_path)
-            if result:
-                return result
-    return None
-
-
 
 def scrapeOffersList(url):
     # get number of total pages

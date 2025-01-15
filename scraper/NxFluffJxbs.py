@@ -136,9 +136,9 @@ def scrapeOfferDetails(jobOffer):
     #applyURL TODO jest problem - nie potrafie znaeleźć linka zewnętrznego
     external_apply = soup.find('use', href="#md-open_in_new")
     if(external_apply):#zewnetrzna aplikacja
-        applyUrl = url #TODO temporary -zanim nie ogarne tego co wyżej
+        applyUrl = jobOffer.url #TODO temporary -zanim nie ogarne tego co wyżej
     else:#wewnetrzna aplikacja
-        applyUrl = url
+        applyUrl = jobOffer.url
     #web_id - brak jest webid w formie liczby, uzywany jest slug, dlatego zahashuje sluga
     hashed_web_id = generate_web_id_from_text(jobOffer.web_id, 12)
     print(hashed_web_id)

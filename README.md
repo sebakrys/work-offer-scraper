@@ -90,10 +90,12 @@ This repository consists of two main components:
 - **NLP & AI**: spaCy, OpenAI GPT
 
 ## Future Improvements
-- Add more scrapers for additional job boards.
 - Enhance the front-end with advanced filtering options.
 - Implement user authentication for secure access.
 - Optimize scraper performance with parallel processing.
 
+---
+## Disclaimer
+This project is developed solely for educational and research purposes. It is not intended for production use, commercial applications, or activities that violate the terms of service or intellectual property rights of any third party. The authors do not guarantee the accuracy, completeness, or reliability of the code or its outputs.
 
-
+Users are solely responsible for ensuring compliance with all applicable laws, regulations, and terms of service when utilizing this project. The authors explicitly disclaim any liability for improper use, including but not limited to scraping or extracting data from external sources without proper authorization.

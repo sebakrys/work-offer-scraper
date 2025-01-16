@@ -67,7 +67,4 @@ The `scraper` directory contains scripts for collecting job offers from various 
 
 ---
 
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
 

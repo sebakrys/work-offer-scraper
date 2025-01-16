@@ -95,7 +95,5 @@ This repository consists of two main components:
 - Implement user authentication for secure access.
 - Optimize scraper performance with parallel processing.
 
-## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
 

@@ -15,6 +15,7 @@ import unicodedata
 from openai import OpenAI
 
 from scraper.database import checkIfOfferExistsInDB
+from scraper.prompts import *
 
 LANGUAGE_MODEL_MAP = {
     "pl": "pl_core_news_sm",
@@ -226,22 +227,11 @@ def extract_experience_years_with_openai(description, language_code):
     """
     # Prompt dostosowany do języka
     if language_code == "pl":
-        prompt = f"""
-        W opisie oferty pracy poniżej znajdź wszystkie odniesienia do wymaganego doświadczenia zawodowego 
-        w latach lub miesiącach. Wyraź wynik w latach, uwzględniając konwersję miesięcy na lata (12 miesięcy = 1 rok). Jeśli brak informacji to wypisz 0. Jeśli jest podane w postaci zakresu (np. 3-4 lata) podaj niższą wartość.
-        Wypisz same liczby. Nie sumuj oddzielnych doświadczeń, lecz je wypisz. Oto opis oferty pracy:
-
-        {description}
-        """
+        prompt = PROMPT_EXPERIENCE_YEARS_PL.format(description=description)
     else:
-        prompt = f"""
-        From the job description below, find all references to required professional experience 
-        in years or months. Express the result in years, including converting months into years 
-        (12 months = 1 year). If there is no information, print 0. In case of range (eg. 3-4 years), provide lower value. Provide only the numbers. Don't sum separate experiences, but write out. Here is the job description:
-
-        {description}
-        """
+        prompt = PROMPT_EXPERIENCE_YEARS_EN.format(description=description)
     try:
+        #print(prompt)
         client = OpenAI(
             api_key=os.environ.get("OPENAI_API_KEY"),  # This is the default and can be omitted
             organization=os.environ.get("OPENAI_ORG_ID"),
@@ -578,54 +568,11 @@ def generateSkillsSectionForCV(job_offer):
     language_code = job_offer.language
     # Prompt dostosowany do języka
     if language_code == "pl":
-        prompt = f"""
-        Na podstawie mojej wiedzy:
-        {my_knowledge}, English B2, TOEIC® Listening & Reading Certificate: 820,
-        Certyfikaty HackerRank: Python, Software Engineer, React, Java.
-
-        Przygotuj sekcję „Umiejętności” do mojego CV. Użyj tylko umiejętności, które są wyraźnie wymienione w „mojej wiedzy” i jednocześnie są istotne dla oferty pracy opisanej poniżej:
-        {job_offer.description}
-
-        Upewnij się, że sekcja „Umiejętności” jest zwięzła (6-8 punktów) i dopasowana do wymagań oferty pracy. Nie dodawaj żadnych umiejętności, które nie są wyraźnie wymienione w „mojej wiedzy”.
-
-        Użyj poniższego szablonu jako wzoru dla finalnej odpowiedzi:
-        [START]
-        •	Programowanie w X, Y, Z
-        •	Zarządzanie projektami i koordynacja zespołów
-        •	Biegłość w Git, Spring, React, MongoDB, PostgreSQL
-        •	Certyfikaty HackerRank: Python, Software Engineer, Java, React
-        •	Znajomość Dockera i Kubernetes
-        •	Praktyczna wiedza i umiejętność korzystania z usług Google Cloud
-        •	English B2, TOEIC® Listening & Reading Certificate: 820
-        [END]
-
-        Sekcja „Umiejętności” powinna być maksymalnie dopasowana, profesjonalna i zwięzła. Podaj finalną odpowiedź w ramach [START] i [END].
-        """
+        prompt = PROMPT_SKILLS_PL.format(my_knowledge=my_knowledge, description=job_offer.description)
     else:
-        prompt = f"""
-        Based on my knowledge:
-        {my_knowledge}, English B2, TOEIC® Listening & Reading Certificate: 820,
-        HackerRank Certifications: Python, Software Engineer, React, Java.
-
-        Prepare a "Skills" section for my CV. Use only skills explicitly mentioned in "my knowledge" that are also relevant to the job offer described below:
-        {job_offer.description}
-
-        Ensure that the "Skills" section is concise (6-8 points) and tailored to the job offer. Do not include any skills that are not explicitly listed in "my knowledge."
-
-        Follow this template for the final output:
-        [START]
-        •	Programming in X, Y, Z
-        •	Project management and team coordination
-        •	Proficiency in Git, Spring, React, MongoDB, PostgreSQL
-        •	HackerRank Certifications: Python, Software Engineer, Java, React
-        •	Familiarity with Docker and Kubernetes
-        •	Practical knowledge and ability to utilize Google Cloud services.
-        •	English B2, TOEIC® Listening & Reading Certificate: 820
-        [END]
-
-        Make the "Skills" section as relevant, professional, and succinct as possible. Provide the final answer between [START] and [END].
-        """
+        prompt = PROMPT_SKILLS_EN.format(my_knowledge=my_knowledge, description=job_offer.description)
     try:
+        #print(prompt)
         client = OpenAI(
             api_key=os.environ.get("OPENAI_API_KEY"),  # This is the default and can be omitted
             organization=os.environ.get("OPENAI_ORG_ID"),

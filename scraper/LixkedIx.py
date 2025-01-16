@@ -282,7 +282,7 @@ url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?k
 def run_LinkedIn_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
     numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
     if (numberOfOffers):
-        offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=1)
+        offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=5)
         for index, offer in enumerate(offers):
             job_offer = scrapeOfferDetails(offer[0], offer[1])
             if (filterJobOffer(job_offer)):

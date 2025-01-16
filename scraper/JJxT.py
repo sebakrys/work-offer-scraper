@@ -92,8 +92,12 @@ def scrapeOfferDetails(jobOffer):
         if script.string and "applyUrl" in script.string:
             try:
                 # Odczytanie JSON-a z tekstu (usunięcie niepotrzebnych elementów)
-                json_content = script.string.split("[", 1)[1].rsplit("]", 1)[0].replace('\\"', '"').replace('\\n"', "").replace('1,"5:', "")
-                apply_url = json.loads(json_content)[3]["offer"]["applyUrl"]
+                pseudo_json_content = script.string.split("[", 1)[1].rsplit("]", 1)[0].replace('\\"', '"').replace('\\n"', "").replace('1,"5:', "")
+                print(pseudo_json_content)
+                match = re.search(r'"applyUrl":"([a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s"]+)"', pseudo_json_content)
+                if match:
+                    apply_url = match.group(1)  # ID oferty to dopasowana grupa
+                    print(f"apply_url: {apply_url}")
                 break  # Zakończ, jeśli znalazłeś URL
             except (json.JSONDecodeError, KeyError, IndexError) as e:
                 print("Błąd podczas przetwarzania JSON-a:", e)
@@ -135,14 +139,15 @@ def scrapeNumberOfOffers(
         print(f"Skipping URL {url} due to repeated failures.")
         return
     #print(response.json()["meta"]["totalItems"])
-    number_of_offers = response.json()["meta"]["totalItems"]
+    number_of_offers = response.json()["count"]
+    print(f"number_of_offers: {number_of_offers}")
 
     return number_of_offers
 
 
 def scrapeOffersList(url, baseOfferDetailsURL = "https://justjoin.it/job-offer/", location="Łódź"):
     # get number of total pages
-    response = fetch_with_retries(url, retries=5, delay=5)
+    response = fetch_with_retries(url, retries=5, delay=5, headers={"Version": "2"})
     if not response:
         print(f"Skipping URL {url} due to repeated failures.")
         return
@@ -201,15 +206,15 @@ def scrapeOffersWithPagination(base_url, numberOfOffers,  repeat=0, singleLoadNu
 
     while (runTimes <= repeat):
         runTimes += 1
-        page = 0
+        page = 1
 
         while (
                 len(offers) < numberOfOffers
         ):
 
-            paginated_url = f"{base_url}&from={0+page*singleLoadNumberOfOffers}&itemsCount={singleLoadNumberOfOffers}"
+            paginated_url = f"{base_url}&page={page}&perPage={singleLoadNumberOfOffers}"
 
-            print(f"Scraping offers: {0+page*singleLoadNumberOfOffers}/{numberOfOffers}, runTime:{runTimes}")
+            print(f"Scraping offers: {page*singleLoadNumberOfOffers}/{numberOfOffers}, runTime:{runTimes}")
             offer_list = scrapeOffersList(paginated_url, baseOfferDetailsURL = baseOfferDetailsURL, location=location)
 
             if not offer_list:
@@ -241,11 +246,14 @@ location = "Łódź"
 
 #location_for_API="%C5%81%C3%B3d%C5%BA" #translates into Łódź, to obtain in use quote(location)
 
-experienceLevel = "junior%2Cmid"
+experienceLevel = "experienceLevels[]=junior&experienceLevels[]=mid"
 
-urlForNumberOfOffers = f"https://api.justjoin.it/v2/user-panel/offers/by-cursor?city={quote(location)}&currency=pln&experienceLevels[]=junior&experienceLevels[]=mid&orderBy=DESC&sortBy=published&from={0}&itemsCount={1}"
+urlForNumberOfOffers = f"https://api.justjoin.it/v2/user-panel/offers/count?city={quote(location)}&{experienceLevel}"
 
-url = f"https://api.justjoin.it/v2/user-panel/offers/by-cursor?city={quote(location)}&currency=pln&experienceLevels[]=junior&experienceLevels[]=mid&orderBy=DESC&sortBy=published"
+url = f"https://api.justjoin.it/v2/user-panel/offers/by-cursor?city={quote(location)}&currency=pln&{experienceLevel}&orderBy=DESC&sortBy=published"
+
+url_v2 = f"https://api.justjoin.it/v2/user-panel/offers?city={quote(location)}&{experienceLevel}&sortBy=published&orderBy=DESC"
+
 
 baseOfferDetailsURL = "https://justjoin.it/job-offer/"
 
@@ -256,7 +264,7 @@ baseOfferDetailsURL = "https://justjoin.it/job-offer/"
 def run_JJIT_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
     numberOfOffers= int(scrapeNumberOfOffers(urlForNumberOfOffers))
     if (numberOfOffers):
-        offers = scrapeOffersWithPagination(url, numberOfOffers,  repeat=1, singleLoadNumberOfOffers=10, baseOfferDetailsURL=baseOfferDetailsURL, location=location)
+        offers = scrapeOffersWithPagination(url_v2, numberOfOffers,  repeat=1, singleLoadNumberOfOffers=10, baseOfferDetailsURL=baseOfferDetailsURL, location=location)
         for index, offer in enumerate(offers):
             job_offer = scrapeOfferDetails(offer)
             if (filterJobOffer(job_offer)):

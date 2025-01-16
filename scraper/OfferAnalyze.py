@@ -11,6 +11,7 @@ import subprocess
 
 
 # Mapowanie języków na modele spaCy
+import unicodedata
 from openai import OpenAI
 
 from scraper.database import checkIfOfferExistsInDB
@@ -715,3 +716,11 @@ def find_path_to_key(data, target_key, target_value=None, current_path=""):
             if result:
                 return result
     return None
+
+def remove_diacritics(text):
+    """Usuwa znaki diakrytyczne i normalizuje tekst."""
+    normalized = ''.join(
+        c for c in unicodedata.normalize('NFD', text)
+        if unicodedata.category(c) != 'Mn'
+    )
+    return normalized.replace("Ł", "L").replace("ł", "l")

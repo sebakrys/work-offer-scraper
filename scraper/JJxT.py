@@ -261,7 +261,7 @@ baseOfferDetailsURL = "https://justjoin.it/job-offer/"
 
 
 
-def run_JJIT_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
+def run_JJXT_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
     numberOfOffers= int(scrapeNumberOfOffers(urlForNumberOfOffers))
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url_v2, numberOfOffers,  repeat=1, singleLoadNumberOfOffers=10, baseOfferDetailsURL=baseOfferDetailsURL, location=location)

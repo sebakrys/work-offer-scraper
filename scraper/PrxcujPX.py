@@ -361,7 +361,7 @@ url = f"https://www.pracuj.pl/praca/{searchKeyword};kw/{location};wp?rd={distanc
 
 
 
-def run_PracujPL_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
+def run_PrxcujPX_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
     numberOfOffers, max_page = scrapeNumberOfOffers(urlForNumberOfOffers)
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url, numberOfOffers, max_page, repeat=1)

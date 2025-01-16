@@ -279,7 +279,7 @@ url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?k
 # scrapeOffersList(url)
 
 
-def run_LinkedIn_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
+def run_LixkedIx_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
     numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=5)

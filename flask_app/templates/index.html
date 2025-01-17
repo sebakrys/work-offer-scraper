@@ -55,6 +55,7 @@
         <thead>
             <tr>
                 <th>ID</th>
+                <th>Hide</th>
                 <th>Title</th>
                 <th>Organization</th>
                 <th>% skill</th>
@@ -78,6 +79,12 @@
             },
             columns: [
                 { data: 'id' },
+                {
+                    data: null, // Kolumna "Hide" nie wymaga danych
+                    render: function(data, type, row) {
+                        return `<button class="hide-btn" data-id="${row.id}">Hide</button>`;
+                    }
+                },
                                 {
                     data: 'title',
                     render: function(data, type, row) {
@@ -108,11 +115,42 @@
                     }
                 },
                 { data: 'apply_url', render: function(data, type, row) {
-                    return `<a onclick="handleApply(${row.id})"
+                    return `
+<button class="hide-btn" data-id="${row.id}">Hide</button>
+<a onclick="handleApply(${row.id})"
 href="${data}" target="_blank">Apply</a>`;
                 }},
             ],
             order: [[0, 'asc']]
+        });
+
+        // Obsługa kliknięcia przycisku "Hide"
+        $('#jobTable').on('click', '.hide-btn', function() {
+
+            let text = "Press a button!\nEither OK or Cancel.";
+            if (confirm("Do  you want to hide offer?") == false) {
+                return
+            }
+
+            const jobId = $(this).data('id');
+            const table = $('#jobTable').DataTable();
+
+            // Znajdź wiersz na podstawie ID i ukryj go
+            table.row($(this).parents('tr')).remove().draw();
+
+            // Opcjonalne wysłanie żądania do serwera
+            $.ajax({
+                url: '/api/update_hidden',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ id: jobId, hidden: true }),
+                success: function(response) {
+                    alert(response.message || 'Job offer hidden successfully!');
+                },
+                error: function() {
+                    alert('An error occurred while hiding the job offer.');
+                }
+            });
         });
 
         // Obsługa zmiany toggleboxa

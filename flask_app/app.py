@@ -10,7 +10,7 @@ def get_data():
     # Pobranie danych z bazy
     session = SessionLocal()
     try:
-        offers = session.query(JobOfferDB).all()
+        offers = session.query(JobOfferDB).filter(JobOfferDB.hidden==False)
         data = [
             {
                 "id": offer.id,
@@ -74,6 +74,34 @@ def update_applied():
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
     finally:
         session.close()
+
+@app.route('/api/update_hidden', methods=['POST'])
+def update_hidden():
+    """
+    Aktualizuje pole 'applied' w bazie danych.
+    """
+    session: Session = SessionLocal()
+    data = request.json
+    job_id = data.get('id')
+    hidden = data.get('hidden')
+
+    if job_id is None or hidden is None:
+        return jsonify({"error": "Invalid input"}), 400
+
+    try:
+        job_offer = session.query(JobOfferDB).filter(JobOfferDB.id == job_id).first()
+        if not job_offer:
+            return jsonify({"error": "Job offer not found"}), 404
+
+        job_offer.hidden = hidden
+        session.commit()
+        return jsonify({"message": "Hidden status updated successfully!"})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+    finally:
+        session.close()
+
 
 if __name__ == '__main__':
     app.run(debug=True)

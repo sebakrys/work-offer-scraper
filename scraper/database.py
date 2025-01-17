@@ -26,6 +26,7 @@ class JobOfferDB(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     applied = Column(Boolean, default=False)  # new
+    hidden = Column(Boolean, default=False)
     url = Column(Text, nullable=False)
     date = Column(Date)
     title = Column(Text)

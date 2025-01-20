@@ -5,12 +5,28 @@ from scraper.database import JobOfferDB, save_job_offer_to_db, init_db, SessionL
 
 app = Flask(__name__)
 
+@app.route('/api/data/appliedn0', methods=['GET'])
+def get_data_appliedn0():
+    print("get_data_appliedn0")
+    # Pobranie danych z bazy
+    session = SessionLocal()
+    try:
+        appliedOffers = session.query(JobOfferDB).filter(JobOfferDB.applied==True).count()
+
+        data = {"appliedN0": appliedOffers}
+
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
 @app.route('/api/data', methods=['GET'])
 def get_data():
     # Pobranie danych z bazy
     session = SessionLocal()
     try:
-        offers = session.query(JobOfferDB).filter(JobOfferDB.hidden==False)
+        offers = session.query(JobOfferDB).filter(JobOfferDB.hidden==False, JobOfferDB.applied==False)
         data = [
             {
                 "id": offer.id,

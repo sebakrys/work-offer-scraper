@@ -51,6 +51,7 @@
 </head>
 <body>
     <h1>Job Offers</h1>
+    <h2 id="appliedn0"></h2>
     <table id="jobTable" class="display" style="width:100%">
         <thead>
             <tr>
@@ -72,6 +73,7 @@
     </table>
 <script>
     $(document).ready(function() {
+        console.log('/api/data');
         $('#jobTable').DataTable({
             ajax: {
                 url: '/api/data',
@@ -123,6 +125,28 @@ href="${data}" target="_blank">Apply</a>`;
             ],
             order: [[0, 'asc']]
         });
+
+
+
+        console.log('/api/data/appliedn0')
+            $.ajax({
+                url: '/api/data/appliedn0',
+                type: 'GET',
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log(response.appliedN0)
+                    $('#appliedn0').text("Zaaplikowane oferty: "+response.appliedN0)
+                },
+                error: function() {
+                    alert('An error occurred while hiding the job offer.');
+                }
+            });
+
+
+
+
+
+
 
         // Obsługa kliknięcia przycisku "Hide"
         $('#jobTable').on('click', '.hide-btn', function() {

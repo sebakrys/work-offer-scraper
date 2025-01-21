@@ -1,3 +1,3 @@
 
 
-all_tech = set()
+all_tech = set()#TODO dla multiprocessing nie działa

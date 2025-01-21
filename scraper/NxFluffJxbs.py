@@ -1,6 +1,6 @@
 # https://www.linkedin.com/jobs/search?keywords=Developer&location=%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska&distance=25
 import datetime
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 import re
@@ -68,7 +68,7 @@ nfj_WorkModes_dictionary = {
 def scrapeOfferDetails(jobOffer):
     response = fetch_with_retries(jobOffer.url, retries=5, delay=5)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(NxFluffJxbs): Skipping URL {url} due to repeated failures.")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -76,7 +76,7 @@ def scrapeOfferDetails(jobOffer):
 
     response_API = fetch_with_retries(f"https://nofluffjobs.com/api/posting/{jobOffer.web_id}", retries=5, delay=5)
     if not response_API:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(NxFluffJxbs): Skipping URL {url} due to repeated failures.")
         return
     response_JSON = response_API.json()
 
@@ -99,7 +99,7 @@ def scrapeOfferDetails(jobOffer):
     zamiast "junior-backend-developer-node-js-masterborn-lodz" wstawić id dowolnej oferty
     """
 
-    print(jobOffer.url)
+    print(f"(NxFluffJxbs): {jobOffer.url}")
     #organizationURL
     if(soup.find("a", {"data-cy" : "JobOffer_CompanyProfile"}).get("href")):
         organizationURL = f'https://nofluffjobs.com{soup.find("a", {"data-cy" : "JobOffer_CompanyProfile"}).get("href")}'
@@ -141,7 +141,7 @@ def scrapeOfferDetails(jobOffer):
         applyUrl = jobOffer.url
     #web_id - brak jest webid w formie liczby, uzywany jest slug, dlatego zahashuje sluga
     hashed_web_id = generate_web_id_from_text(jobOffer.web_id, 12)
-    print(hashed_web_id)
+    #print(hashed_web_id)
 
     #requirements
     requirements = []
@@ -171,15 +171,15 @@ def scrapeOfferDetails(jobOffer):
 def scrapeNumberOfOffers(
         url="https://nofluffjobs.com/api/search/posting?withSalaryMatch=true&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=pl-PL&pageSize=20&pageTo=1"):
     # get number of total pages
-    print("url scrapeNumberOfOffers " + url)
+    print("(NxFluffJxbs): url scrapeNumberOfOffers " + url)
     response = fetch_with_retries(url, retries=5, delay=5, method="POST", headers=nxfluffjxbs_headers, data=nxfluffjxbs_data)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(NxFluffJxbs): Skipping URL {url} due to repeated failures.")
         return
-    print(response.json())
-    print(find_path_to_key(response.json(), "totalCount"))
+    #print(response.json())
+    #print(find_path_to_key(response.json(), "totalCount"))
     number_of_offers = response.json()["totalCount"]
-    print(f"Liczba ofert: {number_of_offers}")
+    print(f"(NxFluffJxbs): Liczba ofert: {number_of_offers}")
     return number_of_offers
 
 
@@ -188,7 +188,7 @@ def scrapeOffersList(url, baseOfferDetailsURL = "https://justjoin.it/job-offer/"
     # get number of total pages
     response = fetch_with_retries(url, retries=5, delay=5, method="POST", headers=nxfluffjxbs_headers, data=nxfluffjxbs_data)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(NxFluffJxbs): Skipping URL {url} due to repeated failures.")
         return
 
     json_content = response.json()
@@ -198,10 +198,10 @@ def scrapeOffersList(url, baseOfferDetailsURL = "https://justjoin.it/job-offer/"
     for job in json_content["postings"]:# normal job offers
         if job["id"]:
             location = None
-            print(job["id"])
+            #print(job["id"])
             slug = job["id"]
             if(job["location"]["places"] and type(job["location"]["places"]) is list):
-                print("Multilocation")#wiele lokacji, wybrac na podstawie zapytania włąściwą lokalizację
+                #print("Multilocation")#wiele lokacji, wybrac na podstawie zapytania włąściwą lokalizację
                 for job_location in job["location"]["places"]:
                     if(location==None):
                         location = job_location.get("city") or job_location.get("province") or None
@@ -209,11 +209,11 @@ def scrapeOffersList(url, baseOfferDetailsURL = "https://justjoin.it/job-offer/"
                         #print(job_location)
                         slug = job_location["url"]
                         location = job_location["province"]
-                        print(location)
+                        #print(location)
                     if("city" in job_location and job_location["city"] == city):
                         slug = job_location["url"]
                         location = job_location["city"]
-                        print(location)
+                        #print(location)
                         break
 
             employmentTypes = []
@@ -247,8 +247,8 @@ def scrapeOffersList(url, baseOfferDetailsURL = "https://justjoin.it/job-offer/"
             ))
 
 
-            print(baseOfferDetailsURL+slug)
-            print(job["title"])
+            #print(baseOfferDetailsURL+slug)
+            #print(job["title"])
 
     return offers
 
@@ -267,27 +267,27 @@ def scrapeOffersWithPagination(base_url, numberOfOffers,  repeat=0, baseOfferDet
 
             paginated_url = f"{base_url}&pageTo={0+page}"
 
-            print(f"Scraping offers: {0+page*pageSize}/{numberOfOffers}, runTime:{runTimes}")
+            print(f"(NxFluffJxbs): Scraping offers: {0+page*pageSize}/{numberOfOffers}, runTime:{runTimes}")
             offer_list = scrapeOffersList(paginated_url, baseOfferDetailsURL = baseOfferDetailsURL, city="Łódź", province="lodz")
 
             if not offer_list:
-                print("No more offers found or reached end of results.")
+                print("(NxFluffJxbs): No more offers found or reached end of results.")
                 break
             offers_in_request = len(offer_list)
-            print(f"offers_in_request {offers_in_request}")
+
             for single_offer in offer_list:
                 try:
                     if single_offer not in offers:
                         offers.add(single_offer)
                     else:
-                        print(f"Duplicate offer found: {single_offer.url}")
+                        #print(f"Duplicate offer found: {single_offer.url}")
                         pass
                 except KeyError:
-                    print("Skipping a link without 'url'")
-            print(f"Total unique offers scraped: {len(offers)}")
+                    print("(NxFluffJxbs): Skipping a link without 'url'")
+            #print(f"Total unique offers scraped: {len(offers)}")
             page+=1
 
-    print(f"Total unique offers scraped: {len(offers)}")
+    print(f"(NxFluffJxbs): Total unique offers scraped: {len(offers)}")
     return offers
 
 
@@ -330,6 +330,7 @@ baseOfferDetailsURL = "https://nofluffjobs.com/pl/job/"
 
 
 def run_NxFluffJxbs_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
+    start_time = time.monotonic()
     numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=0)
@@ -338,18 +339,18 @@ def run_NxFluffJxbs_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart
             if (filterJobOffer(job_offer)):
                 offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url)
                 if ((not offerExists.exists) or updateInCaseOfExistingInDB):
-                    print("======================")
+                    #print("======================")
                     job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
                     if(updateOpenAIApiPart or (not offerExists.exists)):
                         job_offer.experience_years = detectExperienceYears(job_offer)
-                        print(job_offer.experience_years)
+                        #print(job_offer.experience_years)
                         job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
-                    print(job_offer.url)
+                    #print(job_offer.url)
                     job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
                         sum(len(value) for value in job_offer.detected_technologies.values())))
-                    print(job_offer.skill_percentage)
-                    print(
-                        f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
-                    print(
-                        f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
+                    #print(job_offer.skill_percentage)
+                    #print(f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
+                    #print(f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
                     save_job_offer_to_db(job_offer, "NoFluffJobs.com", updateInCaseOfExistingInDB=updateInCaseOfExistingInDB, updateOpenAIApiPart=updateOpenAIApiPart)
+    end_time = time.monotonic()
+    print(f"(NxFluffJxbs): total time: {timedelta(seconds=end_time - start_time)}")

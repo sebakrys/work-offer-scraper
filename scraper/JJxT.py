@@ -4,6 +4,7 @@ import json
 import os
 import re
 import time
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Text, Date, ARRAY, JSON
@@ -66,7 +67,7 @@ jjit_WorkModes_dictionary = {
 def scrapeOfferDetails(jobOffer):
     response = fetch_with_retries(jobOffer.url, retries=5, delay=5)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(JJxT): Skipping URL {url} due to repeated failures.")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -79,7 +80,7 @@ def scrapeOfferDetails(jobOffer):
                 requirements=job["requiredSkills"],  # TODO zaktualizować na podstawie details
                 detected_technologies=None,
     """
-    print(jobOffer.url)
+    print(f"(JJxT): {jobOffer.url}")
 
     #description
     description = soup.find('div', {"class": "MuiBox-root css-tbycqp"}).get_text(separator="\n").strip()
@@ -93,31 +94,32 @@ def scrapeOfferDetails(jobOffer):
             try:
                 # Odczytanie JSON-a z tekstu (usunięcie niepotrzebnych elementów)
                 pseudo_json_content = script.string.split("[", 1)[1].rsplit("]", 1)[0].replace('\\"', '"').replace('\\n"', "").replace('1,"5:', "")
-                print(pseudo_json_content)
+                #print(pseudo_json_content)
                 match = re.search(r'"applyUrl":"([a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s"]+)"', pseudo_json_content)
                 if match:
                     apply_url = match.group(1)  # ID oferty to dopasowana grupa
-                    print(f"apply_url: {apply_url}")
+                    #print(f"apply_url: {apply_url}")
                 break  # Zakończ, jeśli znalazłeś URL
             except (json.JSONDecodeError, KeyError, IndexError) as e:
-                print("Błąd podczas przetwarzania JSON-a:", e)
+                print("(JJxT): Błąd podczas przetwarzania JSON-a:", e)
     if apply_url:
-        print("Apply URL:", apply_url)
+        #print("Apply URL:", apply_url)
+        pass
     else:
-        print("Nie znaleziono URL-a w skryptach.")
+        #print("Nie znaleziono URL-a w skryptach.")
         apply_url = jobOffer.url #wówczas aplikacja jest poprzez strone oferty
     #web_id - brak jest webid w formie liczby, uzywany jest slug, dlatego zahashuje sluga
     hashed_web_id = generate_web_id_from_text(jobOffer.web_id, 12)
-    print(hashed_web_id)
+    #print(hashed_web_id)
     #requirements
     analyzed_details = analyzeOfferDetails(offerLanguage, description, jobOffer.title, obtainedTechnologiesList=jobOffer.requirements)
     requirements = analyzed_details["requirements"]
     #detected_technologies
     detected_technologies = analyzed_details["detected_technologies"]
 
-    print(jobOffer.employmentType)
-    print(jobOffer.workSchedules)
-    print(jobOffer.workModes)
+    #print(jobOffer.employmentType)
+    #print(jobOffer.workSchedules)
+    #print(jobOffer.workModes)
 
 
     jobOffer.description = description
@@ -133,14 +135,14 @@ def scrapeOfferDetails(jobOffer):
 def scrapeNumberOfOffers(
         url="https://api.justjoin.it/v2/user-panel/offers/by-cursor?city=%C5%81%C3%B3d%C5%BA&currency=pln&experienceLevels[]=junior&experienceLevels[]=mid&orderBy=DESC&sortBy=published&from=0&itemsCount=1"):
     # get number of total pages
-    print("url scrapeNumberOfOffers " + url)
+    print("(JJxT): url scrapeNumberOfOffers " + url)
     response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(JJxT): Skipping URL {url} due to repeated failures.")
         return
     #print(response.json()["meta"]["totalItems"])
     number_of_offers = response.json()["count"]
-    print(f"number_of_offers: {number_of_offers}")
+    print(f"(JJxT): number_of_offers: {number_of_offers}")
 
     return number_of_offers
 
@@ -149,7 +151,7 @@ def scrapeOffersList(url, baseOfferDetailsURL = "https://justjoin.it/job-offer/"
     # get number of total pages
     response = fetch_with_retries(url, retries=5, delay=5, headers={"Version": "2"})
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(JJxT): Skipping URL {url} due to repeated failures.")
         return
 
     json_content = response.json()
@@ -158,10 +160,10 @@ def scrapeOffersList(url, baseOfferDetailsURL = "https://justjoin.it/job-offer/"
 
     for job in json_content["data"]:# normal job offers
         if job["slug"]:
-            print(job["slug"])
+            #print(job["slug"])
             slug = job["slug"]
             if(job["multilocation"]):
-                print("Multilocation")#wiele lokacji, wybrac na podstawie zapytania włąściwą lokalizację
+                #print("Multilocation")#wiele lokacji, wybrac na podstawie zapytania włąściwą lokalizację
                 for job_location in job["multilocation"]:
                     if(job_location["city"] == location):
                         #print(job_location)
@@ -192,10 +194,10 @@ def scrapeOffersList(url, baseOfferDetailsURL = "https://justjoin.it/job-offer/"
                 detected_technologies=None,
             ))
             all_tech.update(job["requiredSkills"])#TODO temporary
-            print("All tech:")
-            print(all_tech)
-            print(baseOfferDetailsURL+slug)
-            print(job["title"])
+            #print("All tech:")
+            #print(all_tech)
+            #print(baseOfferDetailsURL+slug)
+            #print(job["title"])
 
     return offers
 
@@ -214,27 +216,28 @@ def scrapeOffersWithPagination(base_url, numberOfOffers,  repeat=0, singleLoadNu
 
             paginated_url = f"{base_url}&page={page}&perPage={singleLoadNumberOfOffers}"
 
-            print(f"Scraping offers: {page*singleLoadNumberOfOffers}/{numberOfOffers}, runTime:{runTimes}")
+            print(f"(JJxT): Scraping offers: {page*singleLoadNumberOfOffers}/{numberOfOffers}, runTime:{runTimes}")
             offer_list = scrapeOffersList(paginated_url, baseOfferDetailsURL = baseOfferDetailsURL, location=location)
 
             if not offer_list:
-                print("No more offers found or reached end of results.")
+                print("(JJxT): No more offers found or reached end of results.")
                 break
             offers_in_request = len(offer_list)
-            print(f"offers_in_request {offers_in_request}")
+            #print(f"offers_in_request {offers_in_request}")
             for single_offer in offer_list:
                 try:
                     if single_offer not in offers:
                         offers.add(single_offer)
                     else:
-                        print(f"Duplicate offer found: {single_offer.url}")
+                        #print(f"Duplicate offer found: {single_offer.url}")
                         pass
                 except KeyError:
-                    print("Skipping a link without 'url'")
-            print(f"Total unique offers scraped: {len(offers)}")
+                    #print("Skipping a link without 'url'")
+                    pass
+            #print(f"Total unique offers scraped: {len(offers)}")
             page+=1
 
-    print(f"Total unique offers scraped: {len(offers)}")
+    print(f"(JJxT): Total unique offers scraped: {len(offers)}")
     return offers
 
 
@@ -262,6 +265,7 @@ baseOfferDetailsURL = "https://justjoin.it/job-offer/"
 
 
 def run_JJXT_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
+    start_time = time.monotonic()
     numberOfOffers= int(scrapeNumberOfOffers(urlForNumberOfOffers))
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url_v2, numberOfOffers,  repeat=1, singleLoadNumberOfOffers=10, baseOfferDetailsURL=baseOfferDetailsURL, location=location)
@@ -270,18 +274,18 @@ def run_JJXT_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False)
             if (filterJobOffer(job_offer)):
                 offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url)
                 if ((not offerExists.exists) or updateInCaseOfExistingInDB):
-                    print("======================")
+                    #print("======================")
                     job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
                     if(updateOpenAIApiPart or (not offerExists.exists)):
                         job_offer.experience_years = detectExperienceYears(job_offer)
-                        print(job_offer.experience_years)
+                        #print(job_offer.experience_years)
                         job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
-                    print(job_offer.url)
+                    #print(job_offer.url)
                     job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
                         sum(len(value) for value in job_offer.detected_technologies.values())))
-                    print(job_offer.skill_percentage)
-                    print(
-                        f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
-                    print(
-                        f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
+                    #print(job_offer.skill_percentage)
+                    #print(f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
+                    #print(f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
                     save_job_offer_to_db(job_offer, "JJIT", updateInCaseOfExistingInDB=updateInCaseOfExistingInDB, updateOpenAIApiPart=updateOpenAIApiPart)
+    end_time = time.monotonic()
+    print(f"(JJxT): total time: {timedelta(seconds=end_time - start_time)}")

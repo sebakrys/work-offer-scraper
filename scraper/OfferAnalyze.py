@@ -257,7 +257,7 @@ def extract_experience_years_with_openai(description, language_code):
                 years.append(float(part))
             except ValueError:
                 pass  # Pomija fragmenty, które nie są liczbami
-        print(f"Years experience(OpenAI): {years}")
+        #print(f"Years experience(OpenAI): {years}")
         return years
 
     except Exception as e:
@@ -385,7 +385,7 @@ def extract_experience_years_with_context_nlp(description, language_code):
                         years.append(round(experience_in_years, 2))
 
     # Debug output for extracted years
-    print(f"Years experience(NLP): {years}")
+    #print(f"Years experience(NLP): {years}")
     return years
 
 
@@ -481,18 +481,18 @@ def filterJobOffer(job_offer):
 
     text_to_search_4_disqualifying_words = f"{job_offer.title}".lower()
 
-    print(job_offer.job_level)
+    #print(job_offer.job_level)
     # Sprawdzenie obecności słów dyskwalifikujących
 
     for word in disqualifying_words:
         # w tytule
         if word.lower() in text_to_search_4_disqualifying_words:
-            print(f"Oferta odrzucona z powodu słowa dyskwalifikującego: {word}")
+            #print(f"Oferta odrzucona z powodu słowa dyskwalifikującego: {word}")
             return False
         # w job_lvl
         for lvl in job_offer.job_level:
             if (lvl.lower() in word.lower()):
-                print(f"Oferta odrzucona z powodu poziomu dyskwalifikującego: {word}")
+                #print(f"Oferta odrzucona z powodu poziomu dyskwalifikującego: {word}")
                 return False
 
 
@@ -515,9 +515,9 @@ def filterJobOffer(job_offer):
 
     # Jeśli znaleziono wymagane słowa, akceptujemy ofertę
     if found_required_words:
-        print(f"Oferta spełnia wymagania. Znalezione słowa kluczowe: ")#{' '.join(found_required_words)}
-        for w in found_required_words:
-            print(f"- {w}")
+        #print(f"Oferta spełnia wymagania. Znalezione słowa kluczowe: ")#{' '.join(found_required_words)}
+        #for w in found_required_words:
+        #    print(f"- {w}")
         return True
 
     # Jeśli nie znaleziono wymaganych słów, odrzuć ofertę
@@ -549,12 +549,12 @@ def detectSkillDeficiencies(job_offer):
     missing_technologies = sorted(missing_technologies)
 
     # Wyświetlanie wyników
-    if missing_technologies:
+    """if missing_technologies:
         print("Brakujące technologie w tej ofercie:")
         for tech in missing_technologies:
             print(f"- {tech}")
     else:
-        print("Nie znaleziono braków w Twojej wiedzy dla tej oferty.")
+        print("Nie znaleziono braków w Twojej wiedzy dla tej oferty.")"""
 
     return missing_technologies
 
@@ -591,18 +591,19 @@ def generateSkillsSectionForCV(job_offer):
         # Pobranie i przetworzenie odpowiedzi
         extracted_text = response.choices[0].message.content.strip()
         #print(prompt)
-        print(extracted_text)
+        #print(extracted_text)
         skills=""
 
         start = extracted_text.find("[START]") + len("[START]")  # Indeks po [START]
         end = extracted_text.find("[END]")  # Indeks początku [STOP]
-        print(f"[START]:{start} [END]:{end}")
+        #print(f"[START]:{start} [END]:{end}")
 
         if start != -1 and end != -1:
             skills = (extracted_text[start:end]).strip()
-            print(skills)
+            #print(skills)
         else:
-            print("No match found")
+            #print("No match found")
+            pass
         return skills
 
     except Exception as e:

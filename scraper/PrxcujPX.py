@@ -3,6 +3,7 @@ import json
 import os
 import re
 import time
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Text, Date, ARRAY, JSON
@@ -83,7 +84,7 @@ pracujpl_WorkModes_dictionary = {
 def scrapeOfferDetails(url, date, company_url):
     response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(PrxcujPX): Skipping URL {url} due to repeated failures.")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -93,7 +94,7 @@ def scrapeOfferDetails(url, date, company_url):
 
     script_element = soup.find('script', {'id': '__NEXT_DATA__'})
     offerLocation = json.loads(script_element.string.strip())["props"]["pageProps"]["dehydratedState"]["queries"][0]["state"]["data"]["attributes"]["workplaces"][0]["displayAddress"]
-    print(url)
+    print(f"(PrxcujPX): {url}")
 
     requirements = soup.find("section", {"data-test": "section-requirements"})
     if(requirements):
@@ -130,13 +131,13 @@ def scrapeOfferDetails(url, date, company_url):
     offer_id = 0
     if match:
         offer_id = match.group(1)  # ID oferty to dopasowana grupa
-        print(f"ID oferty: {offer_id}")
+        #print(f"ID oferty: {offer_id}")
 
 
 
     #print("=======================")
-    print(offerLanguage)
-    print(url)
+    #print(offerLanguage)
+    #print(url)
     #print(offerTitle)
     #print(offerOrganization)
     #print(offerDescription)
@@ -147,7 +148,7 @@ def scrapeOfferDetails(url, date, company_url):
         mapped_level = pracujpl_joblvl_dictionary.get(original_level, original_level)
         levels.append(mapped_level)
     #offerJobLevel = ", ".join(levels)
-    print(levels)
+    #print(levels)
     #print(json.loads(script_element.string.strip())["props"]["pageProps"]["dehydratedState"]["queries"][0]["state"]["data"]["attributes"]["employment"]["positionLevels"])
     #print(find_path_to_key(json.loads(script_element.string.strip()), "positionLevels"))
 
@@ -181,9 +182,9 @@ def scrapeOfferDetails(url, date, company_url):
             )
         )
 
-    print(employmentType)
-    print(workSchedules)
-    print(workModes)
+    #print(employmentType)
+    #print(workSchedules)
+    #print(workModes)
 
 
     #print(json.loads(script_element.string.strip())["props"]["pageProps"]["dehydratedState"]["queries"][0]["state"]["data"]["attributes"]["employment"]["typesOfContracts"])
@@ -193,13 +194,13 @@ def scrapeOfferDetails(url, date, company_url):
 
 
     detected_technologies_direct_from_site_expected = [span.get_text(strip=True) for span in soup.find_all('span', {'data-test': 'item-technologies-expected'})]
-    print(detected_technologies_direct_from_site_expected)# mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
+    #print(detected_technologies_direct_from_site_expected)# mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
     #all_tech.append(detected_technologies_direct_from_site_expected)
     all_tech.update(detected_technologies_direct_from_site_expected)#TODO Temporary
     detected_technologies_direct_from_site_optional = [span.get_text(strip=True) for span in soup.find_all('span', {'data-test': 'item-technologies-optional'})]
     #print(detected_technologies_direct_from_site_optional)# mozna wykorzytsac do zrobienia kompleksowej(globalnej) listy technologi
     all_tech.update(detected_technologies_direct_from_site_optional)#TODO temporary
-    print(all_tech)
+    #print(all_tech)
 
     analyzed_details = analyzeOfferDetails(offerLanguage, offerDescription, offerTitle, detected_technologies_direct_from_site_expected)
     detected_technologies = analyzed_details["detected_technologies"]
@@ -239,10 +240,10 @@ def scrapeOfferDetails(url, date, company_url):
 def scrapeNumberOfOffers(
         url="https://www.pracuj.pl/praca/developer;kw/lodz;wp?rd=50&et=1%2C17%2C4"):
     # get number of total pages
-    print("url scrapeNumberOfOffers " + url)
+    print("(PrxcujPX): url scrapeNumberOfOffers " + url)
     response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(PrxcujPX): Skipping URL {url} due to repeated failures.")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -252,9 +253,9 @@ def scrapeNumberOfOffers(
         # Pobierz zawartość jako tekst
         script_content = script_element.string.strip()
         number_of_offers =json.loads(script_content)["props"]["pageProps"]["data"]["jobOffers"]["offersTotalCount"]
-    print("Liczba ofert: " + str(number_of_offers))
+    print("(PrxcujPX): Liczba ofert: " + str(number_of_offers))
     max_page = soup.find('span', {'data-test': 'top-pagination-max-page-number'}).text.strip()
-    print(f"Liczba stron: {max_page}")
+    print(f"(PrxcujPX): Liczba stron: {max_page}")
     return number_of_offers, int(max_page)
 
 
@@ -263,7 +264,7 @@ def scrapeOffersList(url):
     # get number of total pages
     response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(PrxcujPX): Skipping URL {url} due to repeated failures.")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -290,8 +291,8 @@ def scrapeOffersList(url):
                     'company_url': job["companyProfileAbsoluteUri"]
                 })
 
-            print(job["offers"][0]["offerAbsoluteUri"])
-            print(job["lastPublicated"])
+            #print(job["offers"][0]["offerAbsoluteUri"])
+            #print(job["lastPublicated"])
 
         for positioned_job in json_content["props"]["pageProps"]["data"]["positionedJobOffers"]["groupedOffers"]:# positioned job offers
             if positioned_job["offers"][0]["offerAbsoluteUri"]:
@@ -300,8 +301,8 @@ def scrapeOffersList(url):
                     'date': positioned_job["lastPublicated"],
                     'company_url': positioned_job["companyProfileAbsoluteUri"]
                 })
-            print(positioned_job["offers"][0]["offerAbsoluteUri"])
-            print(positioned_job["lastPublicated"])
+            #print(positioned_job["offers"][0]["offerAbsoluteUri"])
+            #print(positioned_job["lastPublicated"])
 
     return offers
 
@@ -322,14 +323,14 @@ def scrapeOffersWithPagination(base_url, numberOfOffers, max_page=1, repeat=0):
 
             paginated_url = f"{base_url}&pn={page}"
 
-            print(f"Scraping page: {page}/{max_page}, runTime:{runTimes}")
+            print(f"(PrxcujPX): Scraping page: {page}/{max_page}, runTime:{runTimes}")
             offer_list = scrapeOffersList(paginated_url)
 
             if not offer_list:
-                print("No more offers found or reached end of results.")
+                print("(PrxcujPX): No more offers found or reached end of results.")
                 break
             offers_in_request = len(offer_list)
-            print(f"offers_in_request {offers_in_request}")
+
             for single_offer in offer_list:
                 try:
                     offer_tuple = (single_offer["url"], single_offer["date"], single_offer["company_url"])  # Tworzenie krotki
@@ -337,14 +338,14 @@ def scrapeOffersWithPagination(base_url, numberOfOffers, max_page=1, repeat=0):
                     if offer_tuple not in offers:
                         offers.add(offer_tuple)
                     else:
-                        print(f"Duplicate offer found: {single_offer['url']}")
+
                         pass
                 except KeyError:
-                    print("Skipping a link without 'url'")
-            print(f"Total unique offers scraped: {len(offers)}")
+                    print("(PrxcujPX): Skipping a link without 'url'")
+
             page+=1
 
-    print(f"Total unique offers scraped: {len(offers)}")
+    print(f"(PrxcujPX): Total unique offers scraped: {len(offers)}")
     return offers
 
 
@@ -362,6 +363,7 @@ url = f"https://www.pracuj.pl/praca/{searchKeyword};kw/{location};wp?rd={distanc
 
 
 def run_PrxcujPX_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
+    start_time = time.monotonic()
     numberOfOffers, max_page = scrapeNumberOfOffers(urlForNumberOfOffers)
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url, numberOfOffers, max_page, repeat=1)
@@ -370,18 +372,18 @@ def run_PrxcujPX_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=Fa
             if (filterJobOffer(job_offer)):
                 offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url)
                 if ((not offerExists.exists) or updateInCaseOfExistingInDB):
-                    print("======================")
+                    #print("======================")
                     job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
                     if(updateOpenAIApiPart or (not offerExists.exists)):
                         job_offer.experience_years = detectExperienceYears(job_offer)
-                        print(job_offer.experience_years)
+                        #print(job_offer.experience_years)
                         job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
-                    print(job_offer.url)
+                    #print(job_offer.url)
                     job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
                         sum(len(value) for value in job_offer.detected_technologies.values())))
-                    print(job_offer.skill_percentage)
-                    print(
-                        f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
-                    print(
-                        f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
+                    #print(job_offer.skill_percentage)
+                    #print(f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
+                    #print(f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
                     save_job_offer_to_db(job_offer, "Pracuj.pl", updateInCaseOfExistingInDB=updateInCaseOfExistingInDB, updateOpenAIApiPart=updateOpenAIApiPart)
+    end_time = time.monotonic()
+    print(f"(PrxcujPX): total time: {timedelta(seconds=end_time - start_time)}")

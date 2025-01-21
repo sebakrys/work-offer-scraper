@@ -4,6 +4,7 @@ import math
 import os
 import re
 import time
+from datetime import datetime, timedelta
 from urllib.parse import quote
 
 from dotenv import load_dotenv
@@ -71,9 +72,9 @@ bulldxgjxb_WorkModes_dictionary = {
 def scrapeOfferDetails(jobOffer):
     response = fetch_with_retries(jobOffer.url, retries=5, delay=5)
     if not response:
-        print(f"Skipping URL {jobOffer.url} due to repeated failures.")
+        print(f"(BullDxgJxb):Skipping URL {jobOffer.url} due to repeated failures.")
         return
-    print(jobOffer.url)
+    print(f"(BullDxgJxb):{jobOffer.url}")
     soup = BeautifulSoup(response.text, 'html.parser')
 
     """
@@ -100,12 +101,12 @@ def scrapeOfferDetails(jobOffer):
         #apply_url TODO nie potrafie wyciągnąc URL
         apply_url = jobOffer.url
         #web_id
-        print(jobOffer.web_id)
+        #print(jobOffer.web_id)
         match = re.search(r'^(\d+)-', jobOffer.web_id)
         offer_id = 0
         if match:
             offer_id = match.group(1)  # ID oferty to dopasowana grupa
-            print(f"ID oferty: {offer_id}")
+            #print(f"ID oferty: {offer_id}")
 
         analyzed_details = analyzeOfferDetails(offerLanguage, offer_description, jobOffer.title)
         requirements = analyzed_details["requirements"]
@@ -127,10 +128,10 @@ def scrapeOfferDetails(jobOffer):
 def scrapeNumberOfOffers(
         url="https://bulldogjob.pl/companies/jobs/s/city,%C5%81%C3%B3d%C5%BA/experienceLevel,intern,junior,medium"):
     # get number of total pages
-    print("url scrapeNumberOfOffers " + url)
+    print("(BullDxgJxb):url scrapeNumberOfOffers " + url)
     response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(BullDxgJxb):Skipping URL {url} due to repeated failures.")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -143,8 +144,8 @@ def scrapeNumberOfOffers(
         number_of_offers = json.loads(script_content)["props"]["pageProps"]["totalCount"]
         per_page = json.loads(script_content)["props"]["pageProps"]["slugState"]["perPage"]
         max_page = math.ceil(number_of_offers / per_page)
-    print("Liczba ofert: " + str(number_of_offers))
-    print(f"Liczba stron: {max_page}")
+    print("(BullDxgJxb):Liczba ofert: " + str(number_of_offers))
+    print(f"(BullDxgJxb):Liczba stron: {max_page}")
     return number_of_offers, int(max_page)
 
 
@@ -152,7 +153,7 @@ def scrapeOffersList(url, location = "Łódź", baseOfferDetailsURL = "https://b
     # get number of total pages
     response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(BullDxgJxb):Skipping URL {url} due to repeated failures.")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -165,7 +166,7 @@ def scrapeOffersList(url, location = "Łódź", baseOfferDetailsURL = "https://b
         # Pobierz zawartość jako tekst
         json_content = json.loads(script_element.string.strip())
 
-        print(len(json_content["props"]["pageProps"]["jobs"]))
+
 
         for job in json_content["props"]["pageProps"]["jobs"]:  # normal job offers
             if (job.get("__typename") and job["__typename"] == "Job"):
@@ -181,8 +182,8 @@ def scrapeOffersList(url, location = "Łódź", baseOfferDetailsURL = "https://b
 
                 offerLocation = ""
                 cities = [city.strip() for city in job["city"].split(',')]
-                print(f'cities: {cities}')
-                print(f'remove_diacritics(location): {remove_diacritics(location)}')
+                #print(f'cities: {cities}')
+                #print(f'remove_diacritics(location): {remove_diacritics(location)}')
                 for city in cities:
                     if(city == remove_diacritics(location) or city == location): offerLocation = city
 
@@ -241,27 +242,27 @@ def scrapeOffersWithPagination(base_url, numberOfOffers, max_page=1, repeat=0, l
 
             paginated_url = f"{base_url}/page,{page}"
 
-            print(f"Scraping page: {page}/{max_page}, runTime:{runTimes}")
+            print(f"(BullDxgJxb): Scraping page: {page}/{max_page}, runTime:{runTimes}")
             offer_list = scrapeOffersList(paginated_url, location=location)
 
             if not offer_list:
-                print("No more offers found or reached end of results.")
+                print("(BullDxgJxb):No more offers found or reached end of results.")
                 break
             offers_in_request = len(offer_list)
-            print(f"offers_in_request {offers_in_request}")
+            #print(f"offers_in_request {offers_in_request}")
             for single_offer in offer_list:
                 try:
                     if single_offer not in offers:
                         offers.add(single_offer)
                     else:
-                        print(f"Duplicate offer found: {single_offer.url}")
+                        #print(f"Duplicate offer found: {single_offer.url}")
                         pass
                 except KeyError:
-                    print("Skipping a link without 'url'")
-            print(f"Total unique offers scraped: {len(offers)}")
+                    print("(BullDxgJxb):Skipping a link without 'url'")
+            #print(f"Total unique offers scraped: {len(offers)}")
             page+=1
 
-    print(f"Total unique offers scraped: {len(offers)}")
+    print(f"(BullDxgJxb):Total unique offers scraped: {len(offers)}")
     return offers
 
 
@@ -273,6 +274,7 @@ url = f"https://bulldogjob.pl/companies/jobs/s/city,{quote(location)}/experience
 
 
 def run_BullDxgJxb_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
+    start_time = time.monotonic()
     numberOfOffers, max_page = scrapeNumberOfOffers(urlForNumberOfOffers)
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url, numberOfOffers, max_page, repeat=1, location = location)
@@ -281,19 +283,19 @@ def run_BullDxgJxb_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=
             if (filterJobOffer(job_offer)):
                 offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url)
                 if ((not offerExists.exists) or updateInCaseOfExistingInDB):
-                    print("======================")
+                    #print("======================")
                     job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
                     if (updateOpenAIApiPart or (not offerExists.exists)):
                         job_offer.experience_years = detectExperienceYears(job_offer)
-                        print(job_offer.experience_years)
+                        #print(job_offer.experience_years)
                         job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
-                    print(job_offer.url)
+                    #print(job_offer.url)
                     job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
                         sum(len(value) for value in job_offer.detected_technologies.values())))
-                    print(job_offer.skill_percentage)
-                    print(
-                        f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
-                    print(
-                        f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
+                    print(f"(BullDxgJxb):{job_offer.skill_percentage}")
+                    #print(f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
+                    #print(f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
                     save_job_offer_to_db(job_offer, "BullDogJobs.pl", updateInCaseOfExistingInDB=updateInCaseOfExistingInDB,
                                          updateOpenAIApiPart=updateOpenAIApiPart)
+    end_time = time.monotonic()
+    print(f"(BullDxgJxb): total time: {timedelta(seconds=end_time - start_time)}")

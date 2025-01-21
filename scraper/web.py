@@ -28,7 +28,7 @@ def fetch_with_retries(url, retries=3, delay=2, method="GET", headers=None, data
         except requests.exceptions.RequestException as e:
             print(f"Error fetching {url}: {e}")
             if attempt < retries:
-                print(f"Retrying in {delay} seconds...")
+                #print(f"Retrying in {delay} seconds...")
                 time.sleep(delay)
             else:
                 print("Maximum retries reached. Skipping.")

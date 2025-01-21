@@ -1,0 +1,15 @@
+no multiprocessing:
+(LixkedIx): total time: 0:08:45.407000
+(PrxcujPX): total time: 0:01:51.515000
+(JJxT): total time: 0:04:33.531000
+(NxFluffJxbs): total time: 0:01:08.672000
+(BullDxgJxb): total time: 0:03:25.766000
+total time: 0:19:48.875000
+
+multiprocessing:
+(LixkedIx): total time: 0:08:29.484000
+(PrxcujPX): total time: 0:02:09.907000
+(JJxT): total time: 0:05:39.469000
+(NxFluffJxbs): total time: 0:00:39.735000
+(BullDxgJxb): total time: 0:03:43.407000
+total time: 0:08:40.687000

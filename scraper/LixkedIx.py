@@ -72,7 +72,7 @@ linkedin_employmentType_dictionary = {
 def scrapeOfferDetails(url, date):
     response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(LixkedIx): Skipping URL {url} due to repeated failures.")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -123,8 +123,8 @@ def scrapeOfferDetails(url, date):
         offerWorkSchedules = []
         offerEmploymentType = []
 
-    print(offerWorkSchedules)
-    print(offerEmploymentType)
+    #print(offerWorkSchedules)
+    #print(offerEmploymentType)
 
     # TODO add workModes (Hybrydowo, zdalnie, stacjonarnie) [Dotyczy wszytskich stron] - dla LinkedIn, bez logowania nie ma opcji
 
@@ -178,16 +178,16 @@ def scrapeOfferDetails(url, date):
 def scrapeNumberOfOffers(
         url="https://www.linkedin.com/jobs/search?keywords=Developer&location=%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska&distance=25"):
     # get number of total pages
-    print("url scrapeNumberOfOffers " + url)
+    print("(LixkedIx): url scrapeNumberOfOffers " + url)
     response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(LixkedIx): Skipping URL {url} due to repeated failures.")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
     number_of_offers = soup.find("span", {"class", "results-context-header__job-count"}) \
         .text.strip()
-    print("Liczba ofert: " + number_of_offers)
+    print("(LixkedIx): Liczba ofert: " + number_of_offers)
     return number_of_offers
 
 
@@ -196,7 +196,7 @@ def scrapeOffersList(url):
     # get number of total pages
     response = fetch_with_retries(url, retries=5, delay=5)
     if not response:
-        print(f"Skipping URL {url} due to repeated failures.")
+        print(f"(LixkedIx): Skipping URL {url} due to repeated failures.")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -241,14 +241,14 @@ def scrapeOffersWithPagination(base_url, numberOfOffers, repeat=0):
             start = start + offers_in_request
             paginated_url = f"{base_url}&start={start}"
 
-            print(f"Scraping page(start) {start}/{numberOfOffers}, runTime:{runTimes}")
+            print(f"(LixkedIx): Scraping page(start) {start}/{numberOfOffers}, runTime:{runTimes}")
             offer_list = scrapeOffersList(paginated_url)
 
             if not offer_list:
-                print("No more offers found or reached end of results.")
+                print("(LixkedIx): No more offers found or reached end of results.")
                 break
             offers_in_request = len(offer_list)
-            print(f"offers_in_request {offers_in_request}")
+            #print(f"offers_in_request {offers_in_request}")
             for link in offer_list:
                 try:
                     clean_url = link["url"].split('?')[0]
@@ -261,10 +261,10 @@ def scrapeOffersWithPagination(base_url, numberOfOffers, repeat=0):
                         #print(f"Duplicate offer found: {clean_url}")
                         pass
                 except KeyError:
-                    print("Skipping a link without 'url'")
-            print(f"Total unique offers scraped: {len(offers)}")
+                    print("(LixkedIx): Skipping a link without 'url'")
+            #print(f"Total unique offers scraped: {len(offers)}")
 
-    print(f"Total unique offers scraped: {len(offers)}")
+    print(f"(LixkedIx): Total unique offers scraped: {len(offers)}")
     return offers
 
 
@@ -280,6 +280,7 @@ url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?k
 
 
 def run_LixkedIx_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
+    start_time = time.monotonic()
     numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
     if (numberOfOffers):
         offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=5)
@@ -288,18 +289,18 @@ def run_LixkedIx_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=Fa
             if (filterJobOffer(job_offer)):
                 offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url)
                 if ((not offerExists.exists) or updateInCaseOfExistingInDB):
-                    print("======================")
+                    #print("======================")
                     job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
                     if(updateOpenAIApiPart or (not offerExists.exists)):
                         job_offer.experience_years = detectExperienceYears(job_offer)
-                        print(job_offer.experience_years)
+                        #print(job_offer.experience_years)
                         job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
-                    print(job_offer.url)
+                    #print(job_offer.url)
                     job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
                         sum(len(value) for value in job_offer.detected_technologies.values())))
-                    print(job_offer.skill_percentage)
-                    print(
-                        f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
-                    print(
-                        f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
+                    #print(job_offer.skill_percentage)
+                    #print(f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
+                    #print(f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
                     save_job_offer_to_db(job_offer, "LinkedIn", updateInCaseOfExistingInDB=updateInCaseOfExistingInDB, updateOpenAIApiPart=updateOpenAIApiPart)
+    end_time = time.monotonic()
+    print(f"(LixkedIx): total time: {datetime.timedelta(seconds=end_time - start_time)}")

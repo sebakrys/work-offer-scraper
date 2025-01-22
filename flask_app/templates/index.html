@@ -12,7 +12,11 @@
             white-space: pre-wrap; /* Zachowaj białe znaki i zawijanie wierszy */
             word-wrap: break-word; /* Złam długie słowa, aby dopasować je do kontenera */
         }
+        .hidden {
+            display: none !important;
+        }
     </style>
+    <style ></style>
     <script>
         function handleApply(rowId) {
     // Pobierz dane wiersza
@@ -160,7 +164,9 @@ href="${data}" target="_blank">Apply</a>`;
             const table = $('#jobTable').DataTable();
 
             // Znajdź wiersz na podstawie ID i ukryj go
-            table.row($(this).parents('tr')).remove().draw();
+            //table.row($(this).parents('tr')).remove().draw();
+            //table.row($(this).parents('tr').addClass('hidden'));
+            $(this).parents('tr').addClass('hidden')
 
             // Opcjonalne wysłanie żądania do serwera
             $.ajax({
@@ -169,7 +175,6 @@ href="${data}" target="_blank">Apply</a>`;
                 contentType: 'application/json',
                 data: JSON.stringify({ id: jobId, hidden: true }),
                 success: function(response) {
-                    alert(response.message || 'Job offer hidden successfully!');
                 },
                 error: function() {
                     alert('An error occurred while hiding the job offer.');

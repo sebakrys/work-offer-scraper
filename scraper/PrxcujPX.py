@@ -351,12 +351,15 @@ def scrapeOffersWithPagination(base_url, numberOfOffers, max_page=1, repeat=0):
 
 
 
-searchKeyword = "developer"
+searchKeywords = ["developer", "programista", "data"]
 location = "lodz"
 distance = 50
 
-urlForNumberOfOffers = f"https://www.pracuj.pl/praca/{searchKeyword};kw/{location};wp?rd={distance}&et=1%2C17%2C4"#&et=1%2C17%2C4 - for trainee/Junior/Mid
-url = f"https://www.pracuj.pl/praca/{searchKeyword};kw/{location};wp?rd={distance}&et=1%2C17%2C4"
+#urlForNumberOfOffers_old = f"https://www.pracuj.pl/praca/{searchKeyword};kw/{location};wp?rd={distance}&et=1%2C17%2C4"#&et=1%2C17%2C4 - for trainee/Junior/Mid
+#url_old = f"https://www.pracuj.pl/praca/{searchKeyword};kw/{location};wp?rd={distance}&et=1%2C17%2C4"
+urlsForNumberOfOffers = [f"https://www.pracuj.pl/praca/{keyword};kw/{location};wp?rd={distance}&et=1%2C17%2C4" for keyword in searchKeywords]#&et=1%2C17%2C4 - for trainee/Junior/Mid
+urls = [f"https://www.pracuj.pl/praca/{keyword};kw/{location};wp?rd={distance}&et=1%2C17%2C4" for keyword in searchKeywords]
+
 
 
 
@@ -364,26 +367,29 @@ url = f"https://www.pracuj.pl/praca/{searchKeyword};kw/{location};wp?rd={distanc
 
 def run_PrxcujPX_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
     start_time = time.monotonic()
-    numberOfOffers, max_page = scrapeNumberOfOffers(urlForNumberOfOffers)
-    if (numberOfOffers):
-        offers = scrapeOffersWithPagination(url, numberOfOffers, max_page, repeat=1)
-        for index, offer in enumerate(offers):
-            job_offer = scrapeOfferDetails(offer[0], offer[1], offer[2])
-            if (filterJobOffer(job_offer)):
-                offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url)
-                if ((not offerExists.exists) or updateInCaseOfExistingInDB):
-                    #print("======================")
-                    job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
-                    if(updateOpenAIApiPart or (not offerExists.exists)):
-                        job_offer.experience_years = detectExperienceYears(job_offer)
-                        #print(job_offer.experience_years)
-                        job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
-                    #print(job_offer.url)
-                    job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
-                        sum(len(value) for value in job_offer.detected_technologies.values())))
-                    #print(job_offer.skill_percentage)
-                    #print(f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
-                    #print(f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
-                    save_job_offer_to_db(job_offer, "Pracuj.pl", updateInCaseOfExistingInDB=updateInCaseOfExistingInDB, updateOpenAIApiPart=updateOpenAIApiPart)
+    offers = set()
+    for i, urlForNumberOfOffers in enumerate(urlsForNumberOfOffers):
+        numberOfOffers, max_page = scrapeNumberOfOffers(urlForNumberOfOffers)
+        if (numberOfOffers):
+            offers.update(scrapeOffersWithPagination(urls[i], numberOfOffers, max_page, repeat=1))
+    print(f'(PrxcujPX): Liczba wszystkich ofert {len(offers)}')
+    for index, offer in enumerate(offers):
+        job_offer = scrapeOfferDetails(offer[0], offer[1], offer[2])
+        if (filterJobOffer(job_offer)):
+            offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url)
+            if ((not offerExists.exists) or updateInCaseOfExistingInDB):
+                #print("======================")
+                job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
+                if(updateOpenAIApiPart or (not offerExists.exists)):
+                    job_offer.experience_years = detectExperienceYears(job_offer)
+                    #print(job_offer.experience_years)
+                    job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
+                #print(job_offer.url)
+                job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
+                    sum(len(value) for value in job_offer.detected_technologies.values())))
+                #print(job_offer.skill_percentage)
+                #print(f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
+                #print(f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
+                save_job_offer_to_db(job_offer, "Pracuj.pl", updateInCaseOfExistingInDB=updateInCaseOfExistingInDB, updateOpenAIApiPart=updateOpenAIApiPart)
     end_time = time.monotonic()
     print(f"(PrxcujPX): total time: {timedelta(seconds=end_time - start_time)}")

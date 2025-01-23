@@ -243,7 +243,6 @@ def scrapeOffersWithPagination(base_url, numberOfOffers,  repeat=0, singleLoadNu
 
 
 
-searchKeyword = "developer"
 
 location = "Łódź"
 

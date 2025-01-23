@@ -10,7 +10,6 @@ from scraper.NxFluffJxbs import run_NxFluffJxbs_scraper
 from scraper.shared import all_tech
 
 
-
 if __name__ == "__main__":
     start_time = time.monotonic()
 

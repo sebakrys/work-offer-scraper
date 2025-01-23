@@ -20,7 +20,7 @@ from OfferAnalyze import analyzeOfferDetails, filterJobOffer, detectSkillDeficie
     generateSkillsSectionForCV
 from database import save_job_offer_to_db, checkIfOfferExistsInDB
 from web import fetch_with_retries
-
+from urllib.parse import quote, unquote
 
 linkedin_joblvl_dictionary = {
     "Początkujący" : "3_Junior",
@@ -270,37 +270,44 @@ def scrapeOffersWithPagination(base_url, numberOfOffers, repeat=0):
 
 
 
-searchKeyword = "Developer"
-location = "%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska"
+searchKeywords = ["Developer", "Programista", "Data"]
+#location_old = "%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska"
+location = "Łódź, Woj. Łódzkie, Polska"
 distance = 25 # in miles
 
-urlForNumberOfOffers = f"https://www.linkedin.com/jobs/search?keywords={searchKeyword}&location={location}&distance={distance}"
-url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={searchKeyword}&location={location}"
+urlsForNumberOfOffers = [f"https://www.linkedin.com/jobs/search?keywords={keyword}&location={quote(location)}&distance={distance}" for keyword in searchKeywords]
+urls = [f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={keyword}&location={quote(location)}" for keyword in searchKeywords]
+
+#urlForNumberOfOffers_old = f"https://www.linkedin.com/jobs/search?keywords={searchKeyword}&location={quote(location)}&distance={distance}"
+#url_old = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={searchKeyword}&location={quote(location)}"
 # scrapeOffersList(url)
 
 
 def run_LixkedIx_scraper(updateInCaseOfExistingInDB=True, updateOpenAIApiPart=False):
     start_time = time.monotonic()
-    numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
-    if (numberOfOffers):
-        offers = scrapeOffersWithPagination(url, numberOfOffers, repeat=5)
-        for index, offer in enumerate(offers):
-            job_offer = scrapeOfferDetails(offer[0], offer[1])
-            if (filterJobOffer(job_offer)):
-                offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url)
-                if ((not offerExists.exists) or updateInCaseOfExistingInDB):
-                    #print("======================")
-                    job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
-                    if(updateOpenAIApiPart or (not offerExists.exists)):
-                        job_offer.experience_years = detectExperienceYears(job_offer)
-                        #print(job_offer.experience_years)
-                        job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
-                    #print(job_offer.url)
-                    job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
-                        sum(len(value) for value in job_offer.detected_technologies.values())))
-                    #print(job_offer.skill_percentage)
-                    #print(f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
-                    #print(f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
-                    save_job_offer_to_db(job_offer, "LinkedIn", updateInCaseOfExistingInDB=updateInCaseOfExistingInDB, updateOpenAIApiPart=updateOpenAIApiPart)
+    offers = set()
+    for i, urlForNumberOfOffers in enumerate(urlsForNumberOfOffers):
+        numberOfOffers = int(scrapeNumberOfOffers(urlForNumberOfOffers))
+        if (numberOfOffers):
+            offers.update(scrapeOffersWithPagination(urls[i], numberOfOffers, repeat=5))
+    print(f'(LixkedIx): Liczba wszystkich ofert {len(offers)}')
+    for index, offer in enumerate(offers):
+        job_offer = scrapeOfferDetails(offer[0], offer[1])
+        if (filterJobOffer(job_offer)):
+            offerExists = checkIfOfferExistsInDB(web_id=job_offer.web_id, url=job_offer.url)
+            if ((not offerExists.exists) or updateInCaseOfExistingInDB):
+                #print("======================")
+                job_offer.skill_deficiencies = detectSkillDeficiencies(job_offer)
+                if(updateOpenAIApiPart or (not offerExists.exists)):
+                    job_offer.experience_years = detectExperienceYears(job_offer)
+                    #print(job_offer.experience_years)
+                    job_offer.skills_for_cv = generateSkillsSectionForCV(job_offer)
+                #print(job_offer.url)
+                job_offer.skill_percentage = 1.0 - (float(len(job_offer.skill_deficiencies)) / float(
+                    sum(len(value) for value in job_offer.detected_technologies.values())))
+                #print(job_offer.skill_percentage)
+                #print(f"LEN: skill_deficiencies/detected_technologies: {len(job_offer.skill_deficiencies)}/{sum(len(value) for value in job_offer.detected_technologies.values())}")
+                #print(f"skill_deficiencies: {(job_offer.skill_deficiencies)}, detected_technologies: {(job_offer.detected_technologies)}")
+                save_job_offer_to_db(job_offer, "LinkedIn", updateInCaseOfExistingInDB=updateInCaseOfExistingInDB, updateOpenAIApiPart=updateOpenAIApiPart)
     end_time = time.monotonic()
     print(f"(LixkedIx): total time: {datetime.timedelta(seconds=end_time - start_time)}")

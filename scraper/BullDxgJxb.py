@@ -28,7 +28,7 @@ from scraper.shared import all_tech
 from web import fetch_with_retries
 
 bulldxgjxb_joblvl_dictionary = {
-    "intern": "1trainee",
+    "intern": "1_trainee",
     "junior": "3_Junior",
     "medium": "5_Mid",
     "senior": "7_Senior"

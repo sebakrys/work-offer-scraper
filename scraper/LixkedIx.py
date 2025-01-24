@@ -23,6 +23,8 @@ from web import fetch_with_retries
 from urllib.parse import quote, unquote
 
 linkedin_joblvl_dictionary = {
+    "Staż" : "1_trainee",
+
     "Początkujący" : "3_Junior",
     "Entry level" : "3_Junior",
 
@@ -270,7 +272,7 @@ def scrapeOffersWithPagination(base_url, numberOfOffers, repeat=0):
 
 
 
-searchKeywords = ["Developer", "Programista", "Data"]
+searchKeywords = ["Developer", "Programista", "Data"]#
 #location_old = "%C5%81%C3%B3d%C5%BA%2C%20Woj.%20%C5%81%C3%B3dzkie%2C%20Polska"
 location = "Łódź, Woj. Łódzkie, Polska"
 distance = 25 # in miles

@@ -25,7 +25,7 @@ from scraper.shared import all_tech
 from web import fetch_with_retries
 
 pracujpl_joblvl_dictionary = {
-    "trainee" : "1trainee",
+    "trainee" : "1_trainee",
     "praktykant / stażysta" : "1_trainee",
 
     "junior specialist (Junior)" : "3_Junior",

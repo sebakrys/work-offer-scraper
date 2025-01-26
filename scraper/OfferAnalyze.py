@@ -460,7 +460,7 @@ def analyzeOfferDetails(offerLanguage, offerDescription, offerTitle, obtainedTec
 
 
 
-def filterJobOffer(job_offer):
+def filterJobOffer(job_offer):#fixme niektóre oferty senior przepuszcza, wyeliminować
     """
     Filters a job offer based on disqualifying words in the title and required technologies in detected_technologies.
 
@@ -491,11 +491,9 @@ def filterJobOffer(job_offer):
             return False
         # w job_lvl
         for lvl in job_offer.job_level:
-            if (lvl.lower() in word.lower()):
+            if (word.lower() in lvl.lower()):
                 #print(f"Oferta odrzucona z powodu poziomu dyskwalifikującego: {word}")
                 return False
-
-
 
     # Sprawdzanie słów wymaganych w detected_technologies
     found_required_words = set()

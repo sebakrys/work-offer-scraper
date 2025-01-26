@@ -122,7 +122,7 @@
                 },
                 { data: 'apply_url', render: function(data, type, row) {
                     return `
-<button class="hide-btn" data-id="${row.id}">Hide</button>
+<!--<button class="hide-btn" data-id="${row.id}">Hide</button>-->
 <a onclick="handleApply(${row.id})"
 href="${data}" target="_blank">Apply</a>`;
                 }},
@@ -156,9 +156,9 @@ href="${data}" target="_blank">Apply</a>`;
         $('#jobTable').on('click', '.hide-btn', function() {
 
             let text = "Press a button!\nEither OK or Cancel.";
-            if (confirm("Do  you want to hide offer?") == false) {
+            /*if (confirm("Do  you want to hide offer?") == false) {
                 return
-            }
+            }*/
 
             const jobId = $(this).data('id');
             const table = $('#jobTable').DataTable();

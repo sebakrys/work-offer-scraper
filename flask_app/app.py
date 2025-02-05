@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from flask import Flask, jsonify, render_template, request
 from sqlalchemy.orm import Session
 
@@ -26,7 +28,15 @@ def get_data():
     # Pobranie danych z bazy
     session = SessionLocal()
     try:
-        offers = session.query(JobOfferDB).filter(JobOfferDB.hidden==False, JobOfferDB.applied==False)
+        newest_date = session.query(JobOfferDB.scrape_date).order_by(JobOfferDB.scrape_date.desc()).limit(1).scalar()
+        print(newest_date)
+        treshold_date = newest_date - timedelta(days=1)
+        print(treshold_date)
+        if(treshold_date):
+            offers = session.query(JobOfferDB).filter(JobOfferDB.hidden == False, JobOfferDB.applied == False,
+                                                      JobOfferDB.scrape_date >= treshold_date)
+        else:
+            offers = session.query(JobOfferDB).filter(JobOfferDB.hidden == False, JobOfferDB.applied == False)
         data = [
             {
                 "id": offer.id,
